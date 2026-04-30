@@ -2,11 +2,27 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { getReader } from "@/lib/reader";
 
-export const metadata: Metadata = {
-  title: "Component Showcase",
-  description: "A showcase of all shadcn components",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const reader = await getReader();
+  const settings = await reader.singletons.settings.read();
+
+  return {
+    title: settings?.siteName || "Portfolio",
+    description: settings?.description || "My professional portfolio",
+    openGraph: settings?.ogImage
+      ? {
+          images: [settings.ogImage],
+        }
+      : undefined,
+    icons: settings?.favicon
+      ? {
+          icon: settings.favicon,
+        }
+      : undefined,
+  };
+}
 
 export default async function RootLayout({
   children,
