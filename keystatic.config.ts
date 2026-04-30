@@ -15,7 +15,10 @@ export default config({
       format: { contentField: "content", data: "yaml" },
       schema: {
         title: fields.slug({ name: { label: "Title" } }),
-        publishedDate: fields.date({ label: "Published Date" }),
+        publishedDate: fields.date({
+          label: "Published Date",
+          defaultValue: { kind: "today" },
+        }),
         content: fields.markdoc({
           label: "Content",
           options: {
@@ -133,6 +136,11 @@ export default config({
         github: fields.url({ label: "GitHub URL" }),
         linkedin: fields.url({ label: "LinkedIn URL" }),
         location: fields.text({ label: "Location" }),
+        picture: fields.image({
+          label: "Picture",
+          directory: "public/images/details",
+          publicPath: "/images/details/",
+        }),
         resume: fields.file({
           label: "Resume (PDF)",
           directory: "public/assets",
@@ -146,7 +154,10 @@ export default config({
       format: { data: "yaml" },
       schema: {
         siteName: fields.text({ label: "Site Name" }),
-        description: fields.text({ label: "Site Description (SEO)", multiline: true }),
+        description: fields.text({
+          label: "Site Description (SEO)",
+          multiline: true,
+        }),
         ogImage: fields.image({
           label: "Social Share Image (OG Image)",
           directory: "public/images/settings",
