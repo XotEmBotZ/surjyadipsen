@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "A showcase of all shadcn components",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
