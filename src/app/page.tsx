@@ -197,7 +197,7 @@ export default function ShowcasePage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4 md:px-8">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-primary p-1">
+            <div className="rounded-none bg-primary p-1">
               <Activity className="size-6 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold tracking-tight">Shadcn Ultimate Showcase</span>
@@ -438,7 +438,7 @@ export default function ShowcasePage() {
                   </div>
 
                   <div className="flex items-center space-x-4">
-                    <Skeleton className="size-12 rounded-full" />
+                    <Skeleton className="size-12 rounded-none" />
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-[250px]" />
                       <Skeleton className="h-4 w-[200px]" />
@@ -499,7 +499,7 @@ export default function ShowcasePage() {
                             <li className="row-span-3">
                               <NavigationMenuLink asChild>
                                 <Link
-                                  className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                                  className="flex h-full w-full select-none flex-col justify-end rounded-none bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
                                   href="/"
                                 >
                                   <ImageIcon className="h-6 w-6" />
@@ -514,7 +514,7 @@ export default function ShowcasePage() {
                             </li>
                             <li>
                               <NavigationMenuLink asChild>
-                                <a className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground" href="/docs">
+                                <a className="block select-none space-y-1 rounded-none p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground" href="/docs">
                                   <div className="text-sm font-medium leading-none">Introduction</div>
                                   <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">Re-usable components built using Radix UI and Tailwind CSS.</p>
                                 </a>
@@ -522,7 +522,7 @@ export default function ShowcasePage() {
                             </li>
                             <li>
                               <NavigationMenuLink asChild>
-                                <a className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground" href="/docs/installation">
+                                <a className="block select-none space-y-1 rounded-none p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground" href="/docs/installation">
                                   <div className="text-sm font-medium leading-none">Installation</div>
                                   <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">How to install dependencies and structure your app.</p>
                                 </a>
@@ -749,7 +749,7 @@ export default function ShowcasePage() {
                   </DropdownMenu>
 
                   <ContextMenu>
-                    <ContextMenuTrigger className="flex h-[80px] w-[200px] items-center justify-center rounded-md border border-dashed text-sm">
+                    <ContextMenuTrigger className="flex h-[80px] w-[200px] items-center justify-center rounded-none border border-dashed text-sm">
                       Right click here
                     </ContextMenuTrigger>
                     <ContextMenuContent className="w-64">
@@ -864,14 +864,14 @@ export default function ShowcasePage() {
                       </Button>
                     </CollapsibleTrigger>
                   </div>
-                  <div className="rounded-md border px-4 py-3 font-mono text-sm">
+                  <div className="rounded-none border px-4 py-3 font-mono text-sm">
                     @radix-ui/primitives
                   </div>
                   <CollapsibleContent className="space-y-2">
-                    <div className="rounded-md border px-4 py-3 font-mono text-sm">
+                    <div className="rounded-none border px-4 py-3 font-mono text-sm">
                       @radix-ui/react-dom
                     </div>
-                    <div className="rounded-md border px-4 py-3 font-mono text-sm">
+                    <div className="rounded-none border px-4 py-3 font-mono text-sm">
                       @radix-ui/react-dialog
                     </div>
                   </CollapsibleContent>
@@ -879,7 +879,7 @@ export default function ShowcasePage() {
 
                 <div className="space-y-4">
                   <Label>Image Aspect Ratio (16/9)</Label>
-                  <AspectRatio ratio={16 / 9} className="bg-muted rounded-md overflow-hidden">
+                  <AspectRatio ratio={16 / 9} className="bg-muted rounded-none overflow-hidden">
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                       <ImageIcon className="size-12" />
                     </div>
@@ -892,7 +892,7 @@ export default function ShowcasePage() {
           {/* Section 7: Advanced Layout */}
           <Section title="Advanced Layout & Interaction" icon={Layout}>
             <div className="space-y-8">
-              <div className="h-[200px] rounded-md border">
+              <div className="h-[200px] rounded-none border">
                 <ResizablePanelGroup orientation="horizontal">
                   <ResizablePanel defaultSize={25}>
                     <div className="flex h-full items-center justify-center p-6">
@@ -932,7 +932,7 @@ export default function ShowcasePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <Label>Scroll Area</Label>
-                  <ScrollArea className="h-72 w-full rounded-md border p-4">
+                  <ScrollArea className="h-72 w-full rounded-none border p-4">
                     <div className="space-y-4">
                       <h4 className="text-sm font-medium leading-none">Tags</h4>
                       {Array.from({ length: 20 }).map((_, i) => (
@@ -951,7 +951,7 @@ export default function ShowcasePage() {
                     mode="single"
                     selected={date}
                     onSelect={setDate}
-                    className="rounded-md border w-fit mx-auto"
+                    className="rounded-none border w-fit mx-auto"
                   />
                 </div>
               </div>
