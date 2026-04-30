@@ -15,7 +15,10 @@ export default config({
       format: { contentField: "content", data: "yaml" },
       schema: {
         title: fields.slug({ name: { label: "Title" } }),
-        publishedDate: fields.date({ label: "Published Date" }),
+        publishedDate: fields.date({
+          label: "Published Date",
+          defaultValue: { kind: "today" },
+        }),
         content: fields.markdoc({
           label: "Content",
           options: {

@@ -3,6 +3,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { getReader } from "@/lib/reader";
+import NavBar from "@/components/Navbar";
 
 export async function generateMetadata(): Promise<Metadata> {
   const reader = await getReader();
@@ -33,6 +34,7 @@ export default async function RootLayout({
     <html lang="en" className={`h-full antialiased`}>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <TooltipProvider>
+          <NavBar />
           {children}
           <Toaster />
         </TooltipProvider>
