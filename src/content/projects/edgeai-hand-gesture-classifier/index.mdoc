@@ -1,0 +1,30 @@
+---
+name: EdgeAI Hand Gesture Classifier
+summary: >-
+  Autonomous, self-contained gesture recognition system using K-Nearest
+  Neighbors (KNN) with SIMD hardware acceleration.
+dateRange:
+  - 2025-08-01
+  - 2026-03-01
+status: deployed
+category: hardware
+duration: 8 MONTHS
+latency: MICROSECOND RANGE
+techStack:
+  - C
+  - C++
+  - ESP-IDF
+  - FreeRTOS
+  - ESP32-S3
+  - TinyML
+  - SIMD
+  - ESP-DSP
+  - SPIFFS
+  - Next.js
+  - Tailwind CSS
+repo: https://github.com/XotEmBotZ/gestureRecog
+demo: https://gesture-recog-xi.vercel.app
+---
+Low-latency on-device gesture recognition and data capture using ESP32-S3 and k-NN. Features on-device training, data storage, and real-time inference using an Exponential Moving Average (EMA) filter for sensor de-noising. 
+
+The system maintains a rolling buffer of 32 samples per channel (5 channels total), creating a 160-element feature vector for temporal signature recognition. Optimized with ESP-DSP SIMD instructions for zero-lag predictions compared against SPIFFS-resident datasets.

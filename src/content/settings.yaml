@@ -1,8 +1,14 @@
-siteName: Surjyadip Sen
-description: Full Stack Developer specializing in scalable real-time data analytics and AI-driven automation.
+siteName: Surjyadip Sen | Field Notes
+description: >-
+  Helping individuals and organizations increase efficiency by automating
+  repetitive tasks. Full Stack Developer specializing in scalable real-time data
+  analytics and AI-driven automation.
+favicon: /assets/favicon.png
 socialLinks:
-  - platform: Github
+  - platform: GitHub
     url: https://github.com/XotEmBotZ
   - platform: LinkedIn
-    url: https://www.linkedin.com/in/surjyadip-sen
-copyright: "© 2026 Surjyadip Sen"
+    url: https://www.linkedin.com/in/surjyadip-sen/
+  - platform: Email
+    url: mailto:surjyadip100.sen@gmail.com
+copyright: © 2024 Surjyadip Sen. All Rights Reserved.

@@ -1,3 +1,14 @@
+bio: >-
+  Full Stack Developer specializing in scalable real-time data analytics and
+  AI-driven automation. Proficient in Next.js,
+
+  React Native, Python, and C++, with a proven track record in building
+  high-performance systems for crypto data
+
+  aggregation and embedded IoT devices. Experienced in managing production-grade
+  environments using Docker, Jenkins, and
+
+  PostgreSQL.
 skills:
   - category: Languages
     items:
@@ -5,116 +16,35 @@ skills:
       - C/C++
       - JavaScript
       - TypeScript
-  - category: Frameworks
-    items:
-      - Django
-      - Fast API
-      - React/NextJS
-      - React Native/Expo
-      - Tailwind CSS
-      - Tensorflow
-  - category: Tools and systems
+  - category: Tools & Systems
     items:
       - Git
       - Bun
       - Node
-      - Docker (swarm)
-      - Linux
-      - Traefik/Nginx
-experience:
-  - company: Integrity Technologies Pvt Ltd
-    role: Intern (Web and App Developer)
-    dateRange:
-      - 2025-08-01
-      - 2025-03-01
-    location: Remote
-    techStack:
-      - React Native/Expo
-      - Django
-      - React/Next Js
-      - Jenkins
-      - Celery
-      - PostgreSQL
-      - AWS
-  - company: Freelance
-    role: Independent consultant
-    dateRange:
-      - 2024-02-01
-      - 2025-01-01
-    location: Remote
-    techStack: []
-projects:
-  - name: EdgeAI Hand Gesture Classifier
-    dateRange:
-      - 2025-08-01
-      - 2026-03-01
-    techStack:
-      - C
-      - C++
-      - ESP-IDF
-      - FreeRTOS
-      - ESP32-S3
-      - TinyML
-      - SIMD
-      - Xtensa LX7
-      - SPIFFS
-    images: []
-  - name: CryptoDataAggregator
-    dateRange:
-      - 2023-11-01
-      - 2025-07-01
-    techStack:
-      - Python
-      - Postgresql
-      - Celery
-      - Redis
-      - Docker (compose)
-    repo: https://github.com/XotEmBotZ/CryptoDataAggregator
-    images: []
-  - name: Vision Orator
-    dateRange:
-      - 2025-07-01
-      - 2025-07-01
-    techStack:
-      - NextJs/React
-      - Web Technologies
-    repo: https://github.com/XotEmBotZ/visionOrator
-    demo: https://github.com/XotEmBotZ/visionOrator
-    images: []
-  - name: OptiSeat
-    dateRange:
-      - 2024-11-01
-      - 2024-12-01
-    techStack:
-      - Python
-      - Streamlit
-      - Sqlite
-    repo: https://github.com/XotEmBotZ/OptiSeat
-    demo: https://github.com/XotEmBotZ/OptiSeat
-    images: []
-  - name: QuantTrade Aggregator
-    dateRange:
-      - 2025-08-01
-      - 2025-12-01
-    techStack:
-      - Python
-      - PostgreSQL
-      - Celery
-      - Redis
       - Docker
+      - Linux
       - Nginx
-    images: []
+      - Jenkins
+  - category: Frameworks
+    items:
+      - Django
+      - FastAPI
+      - React
+      - Next.js
+      - React Native
+      - Expo
+      - Tailwind CSS
 education:
   - institution: Vellore Institute of Technology
     degree: B.Tech CSE Core, Computer Science
     dateRange:
       - 2025-01-01
-      - 2029-01-01
+      - 2029-12-31
     location: Chennai, India
   - institution: Kendriya Vidyalaya Barrackpore (Afs)
     degree: Higher Secondary, Science (CS)
     dateRange:
       - 2013-01-01
-      - 2025-01-01
+      - 2025-12-31
     location: Barrackpore, West Bengal, India
     grade: 87%

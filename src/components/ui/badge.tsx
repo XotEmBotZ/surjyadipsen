@@ -1,8 +1,8 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
   "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-none border border-border px-2 py-0.5 text-xs font-bold uppercase tracking-tight whitespace-nowrap transition-all focus-visible:ring-0 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-0 [&>svg]:pointer-events-none [&>svg]:size-3!",
@@ -10,12 +10,9 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground border-border",
-        secondary:
-          "bg-muted text-foreground border-border",
-        destructive:
-          "bg-destructive text-destructive-foreground border-border",
-        outline:
-          "border-border text-foreground",
+        secondary: "bg-muted text-foreground border-border",
+        destructive: "bg-destructive text-destructive-foreground border-border",
+        outline: "border-border text-foreground",
         ghost:
           "border-transparent hover:bg-primary hover:text-primary-foreground",
         link: "text-foreground underline-offset-4 hover:underline border-none",
@@ -25,7 +22,7 @@ const badgeVariants = cva(
       variant: "default",
     },
   }
-)
+);
 
 function Badge({
   className,
@@ -34,7 +31,7 @@ function Badge({
   ...props
 }: React.ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : "span"
+  const Comp = asChild ? Slot.Root : "span";
 
   return (
     <Comp
@@ -43,7 +40,7 @@ function Badge({
       className={cn(badgeVariants({ variant }), className)}
       {...props}
     />
-  )
+  );
 }
 
-export { Badge, badgeVariants }
+export { Badge, badgeVariants };

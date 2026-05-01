@@ -1,0 +1,18 @@
+company: freelance
+role: Independent Consultant
+dateRange:
+  - 2024-02-01
+  - 2025-01-01
+location: Remote
+description: >-
+  Provided independent consulting services, focusing on high-performance systems
+  and automation. Managed multiple projects involving crypto data aggregation,
+  real-time analytics, and web/mobile development.
+techStack:
+  - Python
+  - PostgreSQL
+  - Celery
+  - Redis
+  - Docker
+  - Next.js
+  - React

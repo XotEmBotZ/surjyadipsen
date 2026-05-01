@@ -6,7 +6,5 @@ export default function Layout() {
   if (!showAdminUI) {
     notFound();
   }
-  return (
-    <KeystaticApp />
-  );
+  return <KeystaticApp />;
 }

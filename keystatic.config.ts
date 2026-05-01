@@ -19,6 +19,26 @@ export default config({
           label: "Published Date",
           defaultValue: { kind: "today" },
         }),
+        summary: fields.text({ label: "Summary", multiline: true }),
+        category: fields.select({
+          label: "Category",
+          options: [
+            { label: "Software", value: "software" },
+            { label: "Hardware", value: "hardware" },
+            { label: "Architecture", value: "architecture" },
+            { label: "Field Log", value: "log" },
+          ],
+          defaultValue: "log",
+        }),
+        tags: fields.array(fields.text({ label: "Tag" }), {
+          label: "Tags",
+          itemLabel: (props) => props.value || "New Tag",
+        }),
+        image: fields.image({
+          label: "Cover Image",
+          directory: "public/images/posts",
+          publicPath: "/images/posts/",
+        }),
         content: fields.markdoc({
           label: "Content",
           options: {
@@ -30,6 +50,104 @@ export default config({
         }),
       },
     }),
+    testimonials: collection({
+      label: "Testimonials",
+      slugField: "authorName",
+      path: "src/content/testimonials/*",
+      format: { data: "yaml" },
+      schema: {
+        authorName: fields.slug({ name: { label: "Author Name" } }),
+        authorRole: fields.text({ label: "Author Role" }),
+        publishedDate: fields.date({
+          label: "Published Date",
+          defaultValue: { kind: "today" },
+        }),
+        content: fields.text({ label: "Testimonial Content", multiline: true }),
+      },
+    }),
+    projects: collection({
+      label: "Projects",
+      slugField: "name",
+      path: "src/content/projects/*/",
+      entryLayout: "content",
+      format: { contentField: "description", data: "yaml" },
+      schema: {
+        name: fields.slug({ name: { label: "Project Name" } }),
+        summary: fields.text({ label: "Summary", multiline: true }),
+        dateRange: fields.array(fields.date({ label: "Date" }), {
+          label: "Date Range",
+        }),
+        status: fields.select({
+          label: "Status",
+          options: [
+            { label: "Deployed", value: "deployed" },
+            { label: "In Development", value: "development" },
+            { label: "Archived", value: "archived" },
+            { label: "Operational", value: "operational" },
+          ],
+          defaultValue: "deployed",
+        }),
+        category: fields.select({
+          label: "Category",
+          options: [
+            { label: "Hardware", value: "hardware" },
+            { label: "Software", value: "software" },
+            { label: "Neural", value: "neural" },
+            { label: "Redundancy", value: "redundancy" },
+            { label: "Research", value: "research" },
+          ],
+          defaultValue: "software",
+        }),
+        duration: fields.text({ label: "Duration (e.g., 760 HOURS)" }),
+        stakeholders: fields.text({ label: "Stakeholders" }),
+        latency: fields.text({ label: "Latency / Performance Metric" }),
+        description: fields.markdoc({
+          label: "Detailed Description",
+          options: {
+            image: {
+              directory: "public/images/projects",
+              publicPath: "/images/projects/",
+            },
+          },
+        }),
+        resolution: fields.markdoc({ label: "Technical Resolution / Outcome" }),
+        techStack: fields.array(fields.text({ label: "Tech" }), {
+          label: "Tech Stack",
+          itemLabel: (props) => props.value || "New Tech",
+        }),
+        repo: fields.url({ label: "GitHub Repository" }),
+        demo: fields.url({ label: "Live Demo" }),
+        images: fields.array(
+          fields.image({
+            label: "Screenshot",
+            directory: "public/images/projects",
+            publicPath: "/images/projects/",
+          }),
+          {
+            label: "Project Images",
+          }
+        ),
+      },
+    }),
+    experience: collection({
+      label: "Experience",
+      slugField: "company",
+      path: "src/content/experience/*",
+      entryLayout: "content",
+      schema: {
+        company: fields.slug({ name: { label: "Company Name" } }),
+        role: fields.text({ label: "Role" }),
+        dateRange: fields.array(fields.date({ label: "Date" }), {
+          label: "Date Range",
+        }),
+        location: fields.text({ label: "Location" }),
+        description: fields.text({ label: "Description", multiline: true }),
+        techStack: fields.array(fields.text({ label: "Tech" }), {
+          label: "Tech Stack",
+          itemLabel: (props) => props.value || "New Tech",
+        }),
+      },
+    }),
   },
   singletons: {
     about: singleton({
@@ -37,7 +155,7 @@ export default config({
       path: "src/content/about",
       format: { data: "yaml" },
       schema: {
-        bio: fields.markdoc({ label: "Bio / Summary" }),
+        bio: fields.text({ label: "Bio / Summary", multiline: true }),
         skills: fields.array(
           fields.object({
             category: fields.text({ label: "Category (e.g., Languages)" }),
@@ -49,60 +167,6 @@ export default config({
           {
             label: "Technical Skills",
             itemLabel: (props) => props.fields.category.value || "New Category",
-          }
-        ),
-        experience: fields.array(
-          fields.object({
-            company: fields.text({ label: "Company Name" }),
-            role: fields.text({ label: "Role" }),
-            dateRange: fields.array(fields.date({ label: "Date" }), {
-              label: "Date Range",
-              itemLabel: (props) => props.value || "Select Date",
-            }),
-            location: fields.text({ label: "Location" }),
-            description: fields.markdoc({ label: "Description" }),
-            techStack: fields.array(fields.text({ label: "Tech" }), {
-              label: "Tech Stack",
-              itemLabel: (props) => props.value || "New Tech",
-            }),
-          }),
-          {
-            label: "Professional Experience",
-            slugField: "company",
-            itemLabel: (props) =>
-              `${props.fields.company.value || "New Experience"} - ${props.fields.role.value || ""}`,
-          }
-        ),
-        projects: fields.array(
-          fields.object({
-            name: fields.text({ label: "Project Name" }),
-            dateRange: fields.array(fields.date({ label: "Date" }), {
-              label: "Date Range",
-              itemLabel: (props) => props.value || "Select Date",
-            }),
-            description: fields.markdoc({ label: "Description" }),
-            techStack: fields.array(fields.text({ label: "Tech" }), {
-              label: "Tech Stack",
-              itemLabel: (props) => props.value || "New Tech",
-            }),
-            repo: fields.url({ label: "GitHub Repository" }),
-            demo: fields.url({ label: "Live Demo" }),
-            images: fields.array(
-              fields.image({
-                label: "Screenshot",
-                directory: "public/images/projects",
-                publicPath: "/images/projects/",
-              }),
-              {
-                label: "Project Images",
-                itemLabel: (props) => props.value?.filename || "New Image",
-              }
-            ),
-          }),
-          {
-            label: "Projects",
-            slugField: "name",
-            itemLabel: (props) => props.fields.name.value || "New Project",
           }
         ),
         education: fields.array(
@@ -133,8 +197,6 @@ export default config({
         name: fields.text({ label: "Full Name" }),
         role: fields.text({ label: "Professional Role" }),
         email: fields.text({ label: "Email Address" }),
-        github: fields.url({ label: "GitHub URL" }),
-        linkedin: fields.url({ label: "LinkedIn URL" }),
         location: fields.text({ label: "Location" }),
         picture: fields.image({
           label: "Picture",
