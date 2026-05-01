@@ -1,37 +1,51 @@
 import { getReader } from "@/lib/reader";
 import Link from "next/link";
+import { MobileMenu } from "./mobile-menu";
+
 export default async function NavBar() {
   const reader = await getReader();
-  const details = await reader.singletons.details.read();
+  const settings = await reader.singletons.settings.read().catch(() => null);
+  const details = await reader.singletons.details.read().catch(() => null);
+
   return (
-    <header className="relative z-10 flex h-16 items-center justify-between px-6 md:px-12">
-      <Link href="/" className="text-lg font-bold">
-        {details?.name}{" "}
-        <span className="text-muted-foreground mx-1 font-normal">|</span>{" "}
-        <span className="font-normal">{details?.role}</span>
-      </Link>
-      <nav className="hidden space-x-6 text-sm font-bold tracking-wider uppercase md:flex">
+    <header className="bg-canvas border-primary sticky top-0 z-50 mx-auto flex w-full max-w-full items-center justify-between rounded-none border-b-2 px-6 py-4 transition-none duration-0">
+      <div className="flex items-center gap-8">
         <Link
-          href="/posts"
-          className="decoration-2 underline-offset-4 transition-all hover:line-through"
+          href="/"
+          className="text-primary text-xl font-black tracking-tighter whitespace-nowrap uppercase md:text-2xl"
         >
-          Journal
+          {settings?.siteName || "FIELD NOTES"}
         </Link>
-        <span className="text-border">|</span>
-        <Link
-          href="/#about"
-          className="decoration-2 underline-offset-4 transition-all hover:line-through"
+        <nav className="hidden gap-2 md:flex">
+          <Link
+            href="/projects"
+            className="font-inter text-primary hover:bg-primary hover:text-canvas border-none px-3 py-1 text-sm font-bold tracking-tighter uppercase transition-none"
+          >
+            PORTFOLIO
+          </Link>
+          <Link
+            href="/posts"
+            className="font-inter text-primary hover:bg-primary hover:text-canvas border-none px-3 py-1 text-sm font-bold tracking-tighter uppercase transition-none"
+          >
+            JOURNAL
+          </Link>
+          <Link
+            href="/testimonials"
+            className="font-inter text-primary hover:bg-primary hover:text-canvas border-none px-3 py-1 text-sm font-bold tracking-tighter uppercase transition-none"
+          >
+            ENDORSEMENTS
+          </Link>
+        </nav>
+      </div>
+      <div className="flex items-center gap-4">
+        <a
+          href={`mailto:${details?.email}`}
+          className="border-primary bg-primary text-canvas font-inter hover:bg-canvas hover:text-primary hidden rounded-none border-2 px-4 py-2 text-sm font-bold tracking-tighter uppercase transition-none md:block"
         >
-          About
-        </Link>
-        <span className="text-border">|</span>
-        <Link
-          href="/#contact"
-          className="decoration-2 underline-offset-4 transition-all hover:line-through"
-        >
-          Me
-        </Link>
-      </nav>
+          CONTACT
+        </a>
+        <MobileMenu details={details} />
+      </div>
     </header>
   );
 }

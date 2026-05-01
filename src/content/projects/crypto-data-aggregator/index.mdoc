@@ -1,0 +1,26 @@
+---
+name: CryptoDataAggregator
+summary: >-
+  A high-performance cryptocurrency data ingestion and technical analysis
+  pipeline built on TimescaleDB and Celery.
+dateRange:
+  - 2023-11-01
+  - 2025-07-01
+status: operational
+category: software
+duration: 20 MONTHS
+latency: SUB-SECOND
+techStack:
+  - Python
+  - TimescaleDB
+  - PostgreSQL
+  - Redis
+  - Celery
+  - Docker
+  - CCXT
+  - Pandas-TA
+repo: https://github.com/XotEmBotZ/cryptoDataAggregator
+---
+Multi-exchange data ingestion system fetching OHLCV data from Binance, Bybit, OKX, Bitget, and MEXC. Leverages TimescaleDB hypertables and continuous aggregates for efficient multi-timeframe storage and lightning-fast queries.
+
+The architecture uses Celery and Redis for distributed task processing, automatically calculating over 20+ technical indicators (EMA, RSI, Bollinger Bands, Supertrend, TD Sequential) as new market data arrives. Integrated CoinGecko global market context for FDV and ranking analytics.

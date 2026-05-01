@@ -1,0 +1,20 @@
+company: integrity-technologies
+role: Intern (Web and App Developer)
+dateRange:
+  - 2025-08-01
+  - 2026-03-01
+location: Remote
+description: >-
+  Build and maintained both website and mobile app, migrated to newer
+  technologies, worked on Payment Gateway integrations and developer experience,
+  reducing user facing and system failures and maintained the infrastructures.
+techStack:
+  - React Native
+  - Expo
+  - Django
+  - React
+  - Next.js
+  - Jenkins
+  - Celery
+  - PostgreSQL
+  - AWS
