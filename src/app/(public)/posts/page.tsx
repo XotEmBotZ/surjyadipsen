@@ -1,5 +1,6 @@
 import { getReader } from "@/lib/reader";
 import Link from "next/link";
+import Image from "next/image";
 import { format } from "date-fns";
 import { Container, PageHeader, Section } from "@/components/layout-components";
 import {
@@ -84,10 +85,11 @@ export default async function PostsPage() {
               <div className="border-primary bg-surface-card w-full border-2 p-4">
                 <div className="border-primary bg-surface-dim relative h-[240px] w-full overflow-hidden border-2">
                   {posts[0]?.entry.image ? (
-                    <img
+                    <Image
                       src={posts[0].entry.image}
                       alt=""
-                      className="h-full w-full object-cover grayscale"
+                      fill
+                      className="object-cover grayscale"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-4xl font-black uppercase opacity-20">

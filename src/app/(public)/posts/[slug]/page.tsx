@@ -1,5 +1,6 @@
 import { getReader } from "@/lib/reader";
 import React from "react";
+import Image from "next/image";
 import Markdoc from "@markdoc/markdoc";
 import Link from "next/link";
 import { Container } from "@/components/layout-components";
@@ -81,12 +82,13 @@ export default async function Post({
           </div>
 
           <div className="border-primary bg-surface-card relative w-full border-2 p-2">
-            <div className="bg-surface-dim flex h-[400px] w-full items-center justify-center overflow-hidden">
+            <div className="bg-surface-dim relative flex h-[400px] w-full items-center justify-center overflow-hidden">
               {post.image ? (
-                <img
+                <Image
                   src={post.image}
                   alt=""
-                  className="h-full w-full object-cover contrast-125 grayscale"
+                  fill
+                  className="object-cover contrast-125 grayscale"
                 />
               ) : (
                 <div className="text-6xl font-black uppercase opacity-10 grayscale">
@@ -267,10 +269,11 @@ export default async function Post({
             </h2>
             <div className="bg-canvas border-primary relative mb-4 flex aspect-square items-center justify-center overflow-hidden border-2">
               {post.image ? (
-                <img
+                <Image
                   src={post.image}
                   alt=""
-                  className="h-full w-full object-cover contrast-125 grayscale"
+                  fill
+                  className="object-cover contrast-125 grayscale"
                 />
               ) : (
                 <div className="bg-surface-dim flex h-full w-full items-center justify-center text-2xl font-black uppercase opacity-10">

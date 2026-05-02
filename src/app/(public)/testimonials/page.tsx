@@ -17,40 +17,48 @@ export default async function TestimonialsPage() {
           />
 
           <Section className="gap-gutter grid grid-cols-1 md:grid-cols-2">
-            {testimonials.map(
-              (t, i) => (
-                <article
-                  key={i}
-                  className="border-primary bg-surface-card group relative flex flex-col gap-6 overflow-hidden border-2 p-8"
-                >
-                  <div className="border-primary bg-canvas font-mono-data absolute top-4 right-4 rotate-12 border-2 px-3 py-1 text-xs font-bold uppercase opacity-80 transition-transform group-hover:rotate-0">
-                    VERIFIED_LOG
-                  </div>
+            {testimonials.map((t, i) => (
+              <article
+                key={i}
+                className="border-primary bg-surface-card group relative flex flex-col gap-6 overflow-hidden border-2 p-8"
+              >
+                <div className="border-primary bg-canvas font-mono-data absolute top-4 right-4 rotate-12 border-2 px-3 py-1 text-xs font-bold uppercase opacity-80 transition-transform group-hover:rotate-0">
+                  VERIFIED_LOG
+                </div>
 
-                  <div className="border-primary/20 flex flex-col gap-2 border-b pb-4">
-                    <span className="font-mono-data text-secondary text-xs uppercase">
-                      ID: FN-LOG-{t.entry.publishedDate ? format(new Date(t.entry.publishedDate), "yyyy") : "2024"}-{(i + 1).toString().padStart(3, "0")}
-                    </span>
-                    <span className="font-mono-data text-secondary text-xs uppercase">
-                      STAMP: {t.entry.publishedDate ? format(new Date(t.entry.publishedDate), "yyyy.MM.dd.HHmm.OOO") : "2024.03.14.1200.UTC"}
-                    </span>
-                  </div>
+                <div className="border-primary/20 flex flex-col gap-2 border-b pb-4">
+                  <span className="font-mono-data text-secondary text-xs uppercase">
+                    ID: FN-LOG-
+                    {t.entry.publishedDate
+                      ? format(new Date(t.entry.publishedDate), "yyyy")
+                      : "2024"}
+                    -{(i + 1).toString().padStart(3, "0")}
+                  </span>
+                  <span className="font-mono-data text-secondary text-xs uppercase">
+                    STAMP:{" "}
+                    {t.entry.publishedDate
+                      ? format(
+                          new Date(t.entry.publishedDate),
+                          "yyyy.MM.dd.HHmm.OOO"
+                        )
+                      : "2024.03.14.1200.UTC"}
+                  </span>
+                </div>
 
-                  <blockquote className="font-body-md border-primary text-primary border-l-8 pl-6 text-3xl leading-tight font-black italic">
-                    &quot;{t.entry.content}&quot;
-                  </blockquote>
+                <blockquote className="font-body-md border-primary text-primary border-l-8 pl-6 text-3xl leading-tight font-black italic">
+                  &quot;{t.entry.content}&quot;
+                </blockquote>
 
-                  <div className="border-primary mt-auto flex flex-col gap-2 border-t-2 pt-6">
-                    <span className="font-technical-sm text-secondary text-sm font-bold uppercase">
-                      {t.entry.authorName}
-                    </span>
-                    <span className="font-mono-data text-secondary/60 text-[10px] uppercase">
-                      {t.entry.authorRole}
-                    </span>
-                  </div>
-                </article>
-              )
-            )}
+                <div className="border-primary mt-auto flex flex-col gap-2 border-t-2 pt-6">
+                  <span className="font-technical-sm text-secondary text-sm font-bold uppercase">
+                    {t.entry.authorName}
+                  </span>
+                  <span className="font-mono-data text-secondary/60 text-[10px] uppercase">
+                    {t.entry.authorRole}
+                  </span>
+                </div>
+              </article>
+            ))}
           </Section>
 
           <Section className="mt-12">
@@ -86,40 +94,45 @@ export default async function TestimonialsPage() {
         </section>
 
         <div className="flex flex-col gap-6">
-          {testimonials.map(
-            (t, i) => (
-              <article
-                key={i}
-                className="bg-surface-card border-primary relative overflow-hidden border-2 p-5"
-              >
-                <div className="border-primary bg-canvas font-mono-data absolute top-4 right-4 rotate-12 border-2 px-2 py-1 text-[10px] font-bold uppercase opacity-80">
-                  VERIFIED
-                </div>
+          {testimonials.map((t, i) => (
+            <article
+              key={i}
+              className="bg-surface-card border-primary relative overflow-hidden border-2 p-5"
+            >
+              <div className="border-primary bg-canvas font-mono-data absolute top-4 right-4 rotate-12 border-2 px-2 py-1 text-[10px] font-bold uppercase opacity-80">
+                VERIFIED
+              </div>
 
-                <div className="border-primary/20 mb-4 flex flex-col border-b pb-2">
-                  <span className="font-mono-data text-secondary text-[10px] tracking-tighter uppercase">
-                    ID: FN-LOG-{t.entry.publishedDate ? format(new Date(t.entry.publishedDate), "yyyy") : "2024"}-{(i + 1).toString().padStart(3, "0")}
-                  </span>
-                  <span className="font-mono-data text-secondary text-[10px] tracking-tighter uppercase">
-                    TIMESTAMP: {t.entry.publishedDate ? format(new Date(t.entry.publishedDate), "yyyy.MM.dd.OOO") : "2024.03.14.UTC"}
-                  </span>
-                </div>
+              <div className="border-primary/20 mb-4 flex flex-col border-b pb-2">
+                <span className="font-mono-data text-secondary text-[10px] tracking-tighter uppercase">
+                  ID: FN-LOG-
+                  {t.entry.publishedDate
+                    ? format(new Date(t.entry.publishedDate), "yyyy")
+                    : "2024"}
+                  -{(i + 1).toString().padStart(3, "0")}
+                </span>
+                <span className="font-mono-data text-secondary text-[10px] tracking-tighter uppercase">
+                  TIMESTAMP:{" "}
+                  {t.entry.publishedDate
+                    ? format(new Date(t.entry.publishedDate), "yyyy.MM.dd.OOO")
+                    : "2024.03.14.UTC"}
+                </span>
+              </div>
 
-                <blockquote className="font-body-md border-primary text-primary border-l-4 pl-4 text-xl leading-tight font-black uppercase italic">
-                  &quot;{t.entry.content}&quot;
-                </blockquote>
+              <blockquote className="font-body-md border-primary text-primary border-l-4 pl-4 text-xl leading-tight font-black uppercase italic">
+                &quot;{t.entry.content}&quot;
+              </blockquote>
 
-                <div className="border-primary flex flex-col gap-1 border-t-2 pt-4">
-                  <span className="font-technical-sm text-secondary text-[10px] font-bold uppercase">
-                    {t.entry.authorName}
-                  </span>
-                  <span className="font-mono-data text-secondary/60 text-[8px] uppercase">
-                    {t.entry.authorRole}
-                  </span>
-                </div>
-              </article>
-            )
-          )}
+              <div className="border-primary flex flex-col gap-1 border-t-2 pt-4">
+                <span className="font-technical-sm text-secondary text-[10px] font-bold uppercase">
+                  {t.entry.authorName}
+                </span>
+                <span className="font-mono-data text-secondary/60 text-[8px] uppercase">
+                  {t.entry.authorRole}
+                </span>
+              </div>
+            </article>
+          ))}
         </div>
 
         <section className="border-primary bg-primary text-canvas border-2 p-6 text-center">
