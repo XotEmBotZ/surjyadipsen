@@ -1,4 +1,5 @@
 import { config, fields, collection, singleton } from "@keystatic/core";
+import { componentBlocks } from "./src/components/custom-components";
 
 export const showAdminUI = process.env.NODE_ENV === "development";
 
@@ -47,6 +48,7 @@ export default config({
               publicPath: "/images/posts/",
             },
           },
+          components: componentBlocks,
         }),
       },
     }),
@@ -83,7 +85,6 @@ export default config({
             { label: "Deployed", value: "deployed" },
             { label: "In Development", value: "development" },
             { label: "Archived", value: "archived" },
-            { label: "Operational", value: "operational" },
           ],
           defaultValue: "deployed",
         }),
@@ -93,7 +94,7 @@ export default config({
             { label: "Hardware", value: "hardware" },
             { label: "Software", value: "software" },
             { label: "Neural", value: "neural" },
-            { label: "Redundancy", value: "redundancy" },
+            { label: "Architecture", value: "Architecture" },
             { label: "Research", value: "research" },
           ],
           defaultValue: "software",
@@ -109,8 +110,12 @@ export default config({
               publicPath: "/images/projects/",
             },
           },
+          components: componentBlocks,
         }),
-        resolution: fields.markdoc({ label: "Technical Resolution / Outcome" }),
+        resolution: fields.markdoc({
+          label: "Technical Resolution / Outcome",
+          components: componentBlocks,
+        }),
         techStack: fields.array(fields.text({ label: "Tech" }), {
           label: "Tech Stack",
           itemLabel: (props) => props.value || "New Tech",

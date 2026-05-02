@@ -373,10 +373,17 @@ export default async function HomePage() {
                   <div className="bg-primary text-canvas font-mono-data absolute -top-3 -right-2 px-2 py-1 text-[10px] uppercase">
                     VERIFIED_LOG
                   </div>
-                  <div className="font-mono-data text-mono-data border-primary/10 text-secondary border-b pb-2 text-[10px] uppercase flex justify-between">
-                    <span>REF // {t.entry.authorRole} @ {t.entry.authorName}</span>
-                    <span>{t.entry.publishedDate ? format(new Date(t.entry.publishedDate), "yyyy.MM.dd") : ""}</span>
-                  </div>                  <p className="font-body-md md:text-body-md border-primary border-l-4 pl-4 text-sm uppercase italic">
+                  <div className="font-mono-data text-mono-data border-primary/10 text-secondary flex justify-between border-b pb-2 text-[10px] uppercase">
+                    <span>
+                      REF // {t.entry.authorRole} @ {t.entry.authorName}
+                    </span>
+                    <span>
+                      {t.entry.publishedDate
+                        ? format(new Date(t.entry.publishedDate), "yyyy.MM.dd")
+                        : ""}
+                    </span>
+                  </div>{" "}
+                  <p className="font-body-md md:text-body-md border-primary border-l-4 pl-4 text-sm uppercase italic">
                     &quot;{t.entry.content}&quot;
                   </p>
                 </div>

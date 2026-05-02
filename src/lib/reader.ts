@@ -5,3 +5,5 @@ import { cache } from "react";
 export const getReader = cache(async () => {
   return createReader(process.cwd(), keystaticConfig);
 });
+
+export type Reader = Awaited<ReturnType<typeof getReader>>;

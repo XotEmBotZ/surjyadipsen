@@ -4,7 +4,6 @@ import Link from "next/link";
 export default async function Footer() {
   const reader = await getReader();
   const settings = await reader.singletons.settings.read().catch(() => null);
-  const details = await reader.singletons.details.read().catch(() => null);
 
   return (
     <footer className="bg-canvas border-primary relative z-10 mt-auto flex w-full flex-col items-center justify-between gap-8 rounded-none border-t-2 px-6 py-12 pb-32 md:flex-row md:gap-4 md:py-8 md:pb-8">
