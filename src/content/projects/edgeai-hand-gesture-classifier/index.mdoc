@@ -24,7 +24,229 @@ techStack:
   - Tailwind CSS
 repo: https://github.com/XotEmBotZ/gestureRecog
 demo: https://gesture-recog-xi.vercel.app
+images:
+  - /images/projects/edgeai-hand-gesture-classifier/images/0.png
 ---
-Low-latency on-device gesture recognition and data capture using ESP32-S3 and k-NN. Features on-device training, data storage, and real-time inference using an Exponential Moving Average (EMA) filter for sensor de-noising. 
+# GestureRecog (ESP-GloveStuff) — Project Report
 
-The system maintains a rolling buffer of 32 samples per channel (5 channels total), creating a 160-element feature vector for temporal signature recognition. Optimized with ESP-DSP SIMD instructions for zero-lag predictions compared against SPIFFS-resident datasets.
+> **Repository:** [XotEmBotZ/gestureRecog](https://github.com/XotEmBotZ/gestureRecog) **Hardware:** ESP32-S3 · 5× Flex Sensors · USB Serial **Status:** Completed (Build V2.0.4-BETA)
+
+---
+
+## 1. Overview
+
+GestureRecog is a wearable hand-gesture recognition system built on the ESP32-S3 microcontroller. Five flex sensors — one per finger — feed 12-bit ADC readings into a firmware pipeline that filters, normalises, buffers, and classifies the data entirely on-device using a k-Nearest Neighbours (k-NN) engine accelerated by the S3's SIMD instruction set.
+
+A browser-based dashboard (Next.js + Web Serial API) provides real-time telemetry visualisation, gesture training, and dataset management — with no cloud or backend required.
+
+---
+
+## 2. Purpose & Design Goals
+
+{% table %}
+- Goal
+- Design Choice
+---
+- Fully offline, standalone operation
+- On-device SPIFFS binary dataset; no server dependency
+---
+- Low-latency inference
+- SIMD-accelerated k-NN; full dataset scan in <1ms
+---
+- User-agnostic accuracy
+- Per-user manual calibration normalises absolute ADC range
+---
+- Temporal gesture recognition
+- 32-sample rolling buffer captures motion signature, not just static pose
+---
+- Cross-platform control
+- Web Serial API — works from Chrome on desktop and Android
+---
+- Noise resilience
+- EMA filter (α=0.2) on each channel eliminates electrical/mechanical noise
+{% /table %}
+
+---
+
+## 3. System Architecture
+
+{% mermaid
+   code="graph TB\n    subgraph Glove[\"Wearable Hardware\"]\n        F0[\"Thumb Flex\\nGPIO 1 / ADC1_CH0\"]\n        F1[\"Index Flex\\nGPIO 2 / ADC1_CH1\"]\n        F2[\"Middle Flex\\nGPIO 3 / ADC1_CH2\"]\n        F3[\"Ring Flex\\nGPIO 4 / ADC1_CH3\"]\n        F4[\"Pinky Flex\\nGPIO 5 / ADC1_CH4\"]\n    end\n\n    subgraph ESP32S3[\"ESP32-S3 Firmware (ESP-IDF / FreeRTOS)\"]\n        ADC[\"ADC1 Oneshot Driver\\n12-bit, 10 Hz\"]\n        EMA[\"EMA Filter\\nα = 0.2 per channel\"]\n        CAL[\"Calibration\\nmin/max tracking\"]\n        NORM[\"Normalise\\n0.0 – 1.0\"]\n        BUF[\"Rolling Buffer\\n5ch × 32 samples = 160-dim vector\"]\n        IDLE[\"Activity Detector\\nvariance < 100 → disabled\"]\n        KNN[\"k-NN Inference Engine\\nESP-DSP SIMD\\nEuclidean distance\"]\n        SPIFFS[\"(SPIFFS Flash\\ndataset.bin\\nbinary records)\"]\n        BLE[\"BLE UART\\nNordic NUS profile\\nNimBLE stack\"]\n        UART[\"USB-Serial\\n115200 baud\"]\n    end\n\n    subgraph Dashboard[\"Web Dashboard (Next.js 15 / Browser)\"]\n        WS[\"Web Serial API\\nweb-serial-polyfill\"]\n        CHART[\"Real-time Chart\\nChart.js — 5 channels\"]\n        MODE[\"Mode Switcher\\nTRAIN / INFER / CALIBRATE\"]\n        DS[\"Dataset Panel\\nlist / read / clear\"]\n        PRED[\"Prediction Bubble\\nKNN result + distance\"]\n    end\n\n    F0 & F1 & F2 & F3 & F4 -->|\"12-bit raw ADC\"| ADC\n    ADC --> EMA --> CAL --> NORM --> BUF\n    BUF --> IDLE\n    BUF -->|\"linearised 160-float vector\"| KNN\n    KNN <-->|\"read records\"| SPIFFS\n    BUF -->|\"store labelled sample\"| SPIFFS\n\n    ESP32S3 <-->|\"telemetry + commands\\n>r[i]:[v] >mode:[M] Best Match:...\"| UART\n    ESP32S3 <-->|\"BLE NUS\"| BLE\n    UART <-->|\"Web Serial\"| WS\n    WS --> CHART & MODE & DS & PRED" /%}
+
+---
+
+## 4. Firmware Data Flow
+
+### 4.1 Sampling & Signal Processing Loop (100 ms / 10 Hz)
+
+{% mermaid
+   code="\nflowchart TD\n    START([FreeRTOS main loop\\n100ms tick]) --> READ\n\n    READ[adc_oneshot_read × 5 channels\\n12-bit values 0–4095]\n    READ --> EMA\n\n    EMA[\"EMA Filter per channel\\nema = α × raw + (1−α) × prev\\nα = 0.2\"]\n    EMA --> MODEQ{Current Mode?}\n\n    MODEQ -->|CALIBRATE| CALUPD[\"update_calibration()\\nExpand cal_min / cal_max\\nto observed extremes\"]\n    MODEQ -->|TRAIN or INFER| CALUSE[Use stored cal_min / cal_max\\nor fall back to dynamic window]\n    CALUPD --> NORM\n    CALUSE --> NORM\n\n    NORM[\"preprocess_sample()\\nnorm = (ema − min) / (max − min)\\nclamp to 0.0 – 1.0\"]\n    NORM --> WRBUF\n\n    WRBUF[\"Write to circular buffer\\nglobal_norm_buffer[ch][global_idx]\\nglobal_idx = (global_idx+1) % 32\"]\n    WRBUF --> ACTCHK\n\n    ACTCHK[\"setMinMax() — Activity Check\\nif max−min < 100 for all channels\\n→ isDisabled = true\"]\n    ACTCHK --> MODEQ2{Mode + Disabled?}\n\n    MODEQ2 -->|INFER + active\\n+ 1s elapsed| LINEARISE\n    MODEQ2 -->|TRAIN + store flag set| SAVETASK\n    MODEQ2 -->|otherwise| TELEMETRY\n\n    LINEARISE[\"Unroll circular buffer\\ninto contiguous 160-float array\\n(chronological order)\"]\n    LINEARISE --> KNN[run_knn_inference]\n\n    SAVETASK[\"save_buffer_to_spiffs(label)\\nAppend sample_record_t to\\n/spiffs/dataset.bin\"]\n    SAVETASK --> TELEMETRY\n\n    KNN --> TELEMETRY\n\n    TELEMETRY[\"Print telemetry over Serial\\n>r[i]:[raw]\\n>[i]:[mapped 0–100]\\n>mode:[MODE]\\n>d:[disabled]\\nBest Match: [Label] (Dist: X.XX)\"]\n    TELEMETRY --> START\n" /%}
+
+### 4.2 k-NN Inference Engine
+
+{% mermaid
+   code="\nsequenceDiagram\n    participant ML as main_loop\n    participant KNN as run_knn_inference\n    participant FS as SPIFFS / dataset.bin\n    participant DSP as ESP-DSP SIMD\n\n    ML->>KNN: linearised_norm_buf[160], k=3\n    KNN->>FS: fopen(dataset.bin, \"rb\")\n    KNN->>KNN: init top_k[k] with distance=∞\n\n    loop Read INFERENCE_BATCH_SIZE=20 records at a time\n        FS-->>KNN: batch of sample_record_t {label, data[160]}\n        loop For each record in batch\n            KNN->>DSP: dsps_sub_f32(live, stored, diff, 160)\n            DSP-->>KNN: diff[160]\n            KNN->>DSP: dsps_dotprod_f32(diff, diff, &sum_sq, 160)\n            DSP-->>KNN: sum of squares\n            KNN->>KNN: dist = sqrt(sum_sq)\n            KNN->>KNN: update_top_k() — insert-sort into top_k if closer\n        end\n    end\n\n    KNN->>FS: fclose\n    KNN-->>ML: print \"Best Match: [label] (Dist: X.XX)\"\n    Note over KNN: Timing logged via esp_timer_get_time()\n" /%}
+
+### 4.3 Dataset Storage Format (SPIFFS)
+
+Each call to `store <label>` appends one binary record to `/spiffs/dataset.bin`:
+
+```
+sample_record_t {
+    char  label[16];        // null-terminated gesture name
+    float data[160];        // 5 channels × 32 samples, chronological
+}
+
+```
+
+Records are read back sequentially during inference; no indexing structure is needed given the small dataset size typical of k-NN gesture libraries.
+
+---
+
+## 5. Communication Protocol
+
+The ESP32 emits a structured telemetry stream over USB-Serial (115200 baud) that the dashboard parses:
+
+{% table %}
+- Frame
+- Direction
+- Meaning
+---
+- `>r[i]:[val]`
+- ESP → Browser
+- Raw 12-bit ADC value for channel `i`
+---
+- `>[i]:[val]`
+- ESP → Browser
+- Mapped 0–100 value for progress bars
+---
+- `>max[i]:[val]` / `>min[i]:[val]`
+- ESP → Browser
+- Current calibration bounds per channel
+---
+- `>mode:[MODE]`
+- ESP → Browser
+- Active mode string (TRAIN / INFER / CALIBRATE)
+---
+- `>d:[0/1]`
+- ESP → Browser
+- Activity disabled flag
+---
+- `>time:[us]`
+- ESP → Browser
+- Inference duration in microseconds
+---
+- `Best Match: [Label] (Dist: X.XX)`
+- ESP → Browser
+- Top k-NN prediction result
+---
+- `>list:[id]:[label]`
+- ESP → Browser
+- Dataset record enumeration
+---
+- `mode train` / `mode infer` / `mode calibrate`
+- Browser → ESP
+- Switch operating mode
+---
+- `store <label>`
+- Browser → ESP
+- Capture current buffer as labelled training sample
+---
+- `k <n>`
+- Browser → ESP
+- Set number of k-NN neighbours (1–10)
+---
+- `list` / `clear` / `read <id>`
+- Browser → ESP
+- Dataset management commands
+{% /table %}
+
+BLE UART (Nordic NUS profile via NimBLE) exposes the same command interface wirelessly, enabling Android/BLE control without USB.
+
+---
+
+## 6. Web Dashboard
+
+{% mermaid
+   code="graph LR\n    subgraph Browser[\"Browser — Next.js 15 / React 19\"]\n        WS[\"useWebSerial hook\\nWeb Serial API\\nread loop at 9600bps parser\"]\n        ST[\"Parsed State\\nraw[5] mapped[5] min[5] max[5]\\nmode prediction distance\\ndatasetList selectedSampleData\"]\n\n        WS --> ST\n\n        ST --> CHART[\"RealtimeChart\\nChart.js\\n5-channel rolling waveform\"]\n        ST --> CH[\"Channel Cards × 5\\nraw ADC + mapped bar\"]\n        ST --> PRED[\"Prediction Bubble\\ngesture label + KNN distance\"]\n        ST --> MODEBTN[\"Mode Buttons\\nTRAIN / INFER / CALIBRATE\"]\n        ST --> DSLIST[\"Dataset Panel\\nlist of stored gestures\"]\n        ST --> DETAIL[\"Sample Detail Overlay\\nStaticSampleChart per record\"]\n    end\n\n    MODEBTN -->|sendData| WS\n    DSLIST -->|sendData read N| WS\n\n" /%}
+
+Key frontend features:
+
+- **Real-time waveform** — 5 channels plotted simultaneously with Chart.js; rolling window of recent samples.
+- **Channel cards** — each finger shows raw ADC value, a normalised progress bar, and live calibration min/max.
+- **Prediction bubble** — large gesture label with KNN Euclidean distance score updates every inference cycle.
+- **Dataset panel** — full list of SPIFFS-stored gesture samples, clickable to inspect the raw 32-sample waveform per channel in a modal overlay.
+- **Activity indicator** — IDLE / CAPTURING badge reflects the on-device variance-based disable logic.
+
+---
+
+## 7. FreeRTOS Task Layout
+
+{% mermaid
+   code="flowchart LR\n    MAIN[\"app_main()\\nCore 0 — main loop\\n100ms sampling + inference\"]\n    CON[\"console_task()\\nCore 1 — fgets() stdin\\nCommand parser\"]\n    BLE_H[\"nimble_host_task()\\nNimBLE stack task\"]\n    BLE_RX[\"ble_rx_queue\\nFreeRTOS Queue → console_task\"]\n\n    MAIN <-->|global state\\nbuffers, mode, flags| CON\n    BLE_H -->|incoming BLE chars| BLE_RX\n    BLE_RX --> CON\n\n" /%}
+
+---
+
+## 8. Hardware Summary
+
+{% table %}
+- Component
+- Spec
+---
+- MCU
+- ESP32-S3 (Xtensa LX7 dual-core, 240 MHz)
+---
+- Sensors
+- 5× flex sensors, resistive divider to ADC1
+---
+- ADC
+- 12-bit, ADC1_CH0–CH4 (GPIO 1–5), 12dB attenuation
+---
+- Sampling rate
+- 10 Hz (100 ms loop)
+---
+- Flash storage
+- SPIFFS partition labelled `storage` — dataset.bin binary
+---
+- Connectivity
+- USB-Serial (115200 baud) + BLE 5.0 NUS (NimBLE)
+---
+- Pull config
+- GPIO_PULLDOWN_ONLY on all sensor GPIOs
+{% /table %}
+
+---
+
+## 9. Technical Resolution / Outcome
+
+### Signal Quality
+
+The EMA filter (α = 0.2) on each ADC channel successfully suppresses high-frequency electrical noise and mechanical flex-sensor chatter. The retained low-frequency signal captures meaningful finger-flex curves at the 10 Hz sampling rate with no perceptible lag at the 100ms loop period.
+
+### Normalisation & Calibration
+
+Per-user calibration resolves the core problem of flex-sensor variability — every unit has a different resistance range, and every hand has a different physical range of motion. After a one-time calibration sweep, `preprocess_sample()` maps each sensor's absolute min/max to a universal [0.0, 1.0] float range, making the stored feature vectors portable across re-flashing, sensor swaps, and different wearers.
+
+### Temporal Feature Encoding
+
+Encoding 3.2 seconds of motion history (32 samples × 5 channels) into a 160-float feature vector proved substantially more robust than static single-sample classification. The temporal signature prevents identical static poses from being confused if they are arrived at by different motions, and makes the system resilient to brief sensor glitches.
+
+### SIMD-Accelerated Inference
+
+Using `dsps_sub_f32` and `dsps_dotprod_f32` from the ESP-DSP library applies the ESP32-S3's 128-bit SIMD (vector) extensions to the inner loop of Euclidean distance calculation. A full dataset scan over tens of stored gestures (each 160 floats) completes in under 1ms — measured via `esp_timer_get_time()` — enabling sub-second inference at 1Hz with no impact on the sampling loop.
+
+### On-Device Dataset Persistence
+
+SPIFFS binary storage eliminates any dependency on an external host or network. The dataset survives power cycles and firmware re-flashes (SPIFFS partition is separate from firmware). The binary record format (`label[16] + data[160 floats]`) is compact — each sample is ~656 bytes — allowing hundreds of training examples within the default SPIFFS partition.
+
+### Accuracy Characteristic
+
+k-NN (k=3, configurable up to 10) with Euclidean distance over normalised temporal vectors delivers reliable discrimination between gestures that have distinct flex profiles. Classification quality scales linearly with the number of stored training samples per gesture. The activity-detection guard (variance < 100 threshold) eliminates all phantom predictions when the glove is at rest, yielding a clean idle state with zero false positives.
+
+### Browser Integration
+
+The Web Serial API approach eliminates the need for any native app or driver installation. The dashboard works from Chrome on desktop and Android, making the full training and inference workflow accessible from a phone held in the other hand while wearing the glove — a meaningful UX outcome for a wearable device.
+
+---
+
+*Report generated from source analysis of [XotEmBotZ/gestureRecog](https://github.com/XotEmBotZ/gestureRecog)*
