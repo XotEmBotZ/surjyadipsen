@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Container } from "@/components/layout-components";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
 import { format } from "date-fns";
-import { markdocTags } from "@/components/custom-components";
+import { markdocTags, markdocNodes } from "@/components/custom-components";
 
 export async function generateStaticParams() {
   const reader = await getReader();
@@ -46,12 +46,18 @@ export default async function Project({
 
   // Handle Markdoc content from description field
   const { node } = await project.description();
-  const renderable = Markdoc.transform(node, { tags: markdocTags });
+  const renderable = Markdoc.transform(node, {
+    tags: markdocTags,
+    nodes: markdocNodes,
+  });
 
   // Handle Markdoc content from resolution field
   const resolutionData = project.resolution ? await project.resolution() : null;
   const resolutionRenderable = resolutionData
-    ? Markdoc.transform(resolutionData.node, { tags: markdocTags })
+    ? Markdoc.transform(resolutionData.node, {
+        tags: markdocTags,
+        nodes: markdocNodes,
+      })
     : null;
 
   const relatedProjects = allProjects

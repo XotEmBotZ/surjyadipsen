@@ -28,8 +28,8 @@ export const componentBlocks = {
 };
 
 // ==========================================
-// 2. MARKDOC PARSER TAGS
-// Used in Markdoc.transform(node, { tags: markdocTags })
+// 2. MARKDOC PARSER TAGS & NODES
+// Used in Markdoc.transform(node, { tags: markdocTags, nodes: markdocNodes })
 // ==========================================
 export const markdocTags = {
   mermaid: {
@@ -40,6 +40,34 @@ export const markdocTags = {
         required: true,
       },
     },
+  },
+};
+
+export const markdocNodes = {
+  fence: {
+    render: "Fence",
+    attributes: {
+      content: { type: String },
+      language: { type: String },
+    },
+  },
+  table: {
+    render: "Table",
+  },
+  thead: {
+    render: "TableHeader",
+  },
+  tbody: {
+    render: "TableBody",
+  },
+  tr: {
+    render: "TableRow",
+  },
+  th: {
+    render: "TableHead",
+  },
+  td: {
+    render: "TableCell",
   },
 };
 

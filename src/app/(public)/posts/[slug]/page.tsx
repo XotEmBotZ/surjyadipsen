@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Container } from "@/components/layout-components";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
 import { format } from "date-fns";
-import { markdocTags } from "@/components/custom-components";
+import { markdocTags, markdocNodes } from "@/components/custom-components";
 import {
   LedgerTable,
   LedgerTableHead,
@@ -52,7 +52,10 @@ export default async function Post({
   }
 
   const { node } = await post.content();
-  const renderable = Markdoc.transform(node, { tags: markdocTags });
+  const renderable = Markdoc.transform(node, {
+    tags: markdocTags,
+    nodes: markdocNodes,
+  });
 
   const relatedPosts = allPosts.filter((p) => p.slug !== slug).slice(0, 3);
 
