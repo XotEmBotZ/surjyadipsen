@@ -1,6 +1,7 @@
 import * as React from "react";
 import Markdoc, { type RenderableTreeNode } from "@markdoc/markdoc";
 import { cn } from "@/lib/utils";
+import { reactComponents } from "./custom-components";
 
 interface ComponentProps {
   children?: React.ReactNode;
@@ -8,6 +9,7 @@ interface ComponentProps {
 }
 
 const components = {
+  ...reactComponents,
   p: ({ children, className }: ComponentProps) => (
     <p
       className={cn(

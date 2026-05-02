@@ -9,3 +9,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 You must work in CODER mode
 
 Styling and design guide is present in coverate/style always follow the mentioned guidlines and examples
+
+Always use bun

@@ -6,10 +6,10 @@ summary: >-
 dateRange:
   - 2023-11-01
   - 2025-07-01
-status: deployed
+status: archived
 category: software
 duration: 20 MONTHS
-latency: SUB-SECOND
+latency: HOUR
 techStack:
   - Python
   - TimescaleDB
@@ -20,7 +20,530 @@ techStack:
   - CCXT
   - Pandas-TA
 repo: https://github.com/XotEmBotZ/cryptoDataAggregator
+images: []
 ---
-Multi-exchange data ingestion system fetching OHLCV data from Binance, Bybit, OKX, Bitget, and MEXC. Leverages TimescaleDB hypertables and continuous aggregates for efficient multi-timeframe storage and lightning-fast queries.
+## 1. Executive Summary
 
-The architecture uses Celery and Redis for distributed task processing, automatically calculating over 20+ technical indicators (EMA, RSI, Bollinger Bands, Supertrend, TD Sequential) as new market data arrives. Integrated CoinGecko global market context for FDV and ranking analytics.
+`cryptoDataAggregator` (internally codenamed **raghuLongTerm**) is a high-performance, production-grade cryptocurrency market data pipeline built for algorithmic trading research and quantitative market analysis. It ingests live OHLCV (Open/High/Low/Close/Volume) candlestick data from five major exchanges simultaneously, enriches it with a comprehensive suite of technical indicators, and persists everything in a time-series-optimised database — all running autonomously around the clock.
+
+The system is designed to be the definitive data layer for a trading research stack: structured, scalable, and query-ready across seven timeframes from 1-hour up to 1-month candles.
+
+---
+
+## 2. Purpose & Motivation
+
+{% table %}
+- Goal
+- How the System Addresses It
+---
+- Multi-exchange coverage
+- Unified ingestion from Binance, Bybit, OKX, Bitget, MEXC via CCXT
+---
+- Global market context
+- CoinGecko pipeline for market cap, rankings, ATH/ATL data on top 2,000 coins
+---
+- Time-series efficiency
+- TimescaleDB hypertables with automatic partitioning by timestamp
+---
+- Multi-timeframe analysis
+- Continuous Aggregates auto-generate 2h, 4h, 12h, 1d, 3d, 1w, 1m views
+---
+- Automated indicator computation
+- Celery workers calculate 15+ technical signals after every data ingestion
+---
+- Scalability & fault tolerance
+- Distributed Celery workers with retry logic and exponential backoff
+{% /table %}
+
+---
+
+## 3. Technology Stack
+
+```
+Language        Python 3.12+
+Database        TimescaleDB (PostgreSQL 17)  — time-series hypertables
+Message Broker  Redis                        — Celery task queue & result backend
+Task Engine     Celery + Celery Beat         — distributed workers + cron scheduler
+Data Ingestion  CCXT                         — unified exchange API library
+Market Data     CoinGecko REST API           — global market context
+Analysis        Pandas, NumPy, Pandas-TA     — indicator computation
+Monitoring      Flower                       — Celery task dashboard
+DevOps          Docker + Docker Compose      — containerised deployment
+
+```
+
+---
+
+## 4. System Architecture
+
+### 4.1 High-Level Component Overview
+
+{% mermaid
+   code="graph TB\n    subgraph External[\"External Data Sources\"]\n        B[Binance]\n        BY[Bybit]\n        O[OKX]\n        BG[Bitget]\n        M[MEXC]\n        CG[CoinGecko API]\n    end\n\n    subgraph Orchestration[\"Task Orchestration Layer\"]\n        BEAT[Celery Beat\\nScheduler]\n        REDIS[(Redis\\nMessage Broker)]\n    end\n\n    subgraph Workers[\"Celery Worker Pool\"]\n        W1[Worker 1\\nData Fetcher\\nI/O Intensive]\n        W2[Worker 2\\nIndicator Calculator\\nCPU Intensive]\n        W3[Worker 3\\nBeat / Scheduler]\n    end\n\n    subgraph DB[\"TimescaleDB — PostgreSQL 17\"]\n        H1[(h1_data\\nHypertable\\n1h OHLCV)]\n        CA[(Continuous Aggregates\\nh2 h4 h12 d1 d3 w1 m1)]\n        IND[(indicators\\nHypertable)]\n        CGD[(cg_data\\nHypertable)]\n        AL[(asset_listing\\nasset_declaration)]\n    end\n\n    subgraph Monitor[\"Monitoring\"]\n        FLOWER[Flower Dashboard\\n:5556]\n    end\n\n    BEAT -->|Schedules tasks| REDIS\n    REDIS --> W1\n    REDIS --> W2\n    REDIS --> W3\n\n    W1 -->|CCXT fetch| B & BY & O & BG & M\n    W1 -->|CoinGecko fetch| CG\n    W1 -->|Write OHLCV| H1\n    W1 -->|Write market data| CGD\n    W1 -->|Enqueue CalcIndicators| REDIS\n\n    H1 -->|Auto-aggregated| CA\n    W2 -->|Read 300 candles| H1 & CA\n    W2 -->|Write indicators| IND\n\n    W1 -->|Asset sync| AL\n    REDIS --> FLOWER\n" /%}
+
+### 4.2 Docker Service Topology
+
+{% mermaid
+   code="\ngraph LR\n    subgraph docker-compose\n        PG[postgresql\\ntimescale/timescaledb-ha:pg17\\n:5432]\n        RD[redis\\nredis:latest\\n:6379]\n        WK[worker\\nCelery Worker + Beat]\n        FL[flower\\nCelery Monitor\\n:5556]\n    end\n\n    WK -->|psycopg3 connection| PG\n    WK -->|task queue / results| RD\n    FL -->|reads task events| RD" /%}
+
+---
+
+## 5. Data Flow — Detailed
+
+### 5.1 CCXT Ingestion Pipeline
+
+{% mermaid
+   code="sequenceDiagram\n    participant Beat as Celery Beat\n    participant CI as CcxtInitTask<br/>(hourly)\n    participant AL as AssetListingTask\n    participant EX as ExchangeTask<br/>(per exchange)\n    participant CCXT as Exchange APIs<br/>(Binance/Bybit/OKX…)\n    participant DB as TimescaleDB<br/>h1_data\n    participant Q as Redis Queue\n    participant CALC as CalcIndicatorsTask\n\n    Beat->>CI: trigger every 1h\n    CI->>AL: chain() — refresh asset listings first\n    AL->>CCXT: load_markets() × 8 exchanges\n    AL->>DB: INSERT new assets → asset_listing\n\n    AL-->>CI: listing complete\n    CI->>CI: getExchangeAssets()<br/>filter USDT/BTC/ETH pairs<br/>exclude leveraged tokens (2S/3S/UP/DOWN)\n    CI->>EX: group() — parallel dispatch per exchange\n\n    loop For each asset (up to 1000 per exchange)\n        EX->>CCXT: fetch_ohlcv(asset, \"1h\", limit=1000)\n        CCXT-->>EX: list of [ts, O, H, L, C, V]\n        EX->>EX: take second-to-last candle (closed candle)\n    end\n\n    EX->>DB: executemany INSERT INTO h1_data<br/>(asset, exchange, timestamp, O, H, L, C, V)\n    DB-->>EX: RETURNING last_id, asset\n\n    loop For each timeframe table [h1,h2,h4,h12,d1,d3,w1,m1]\n        EX->>Q: CalcIndicatorsTask.apply_async(table, [(id,asset)…])\n    end\n    Q->>CALC: dequeue\n" /%}
+
+### 5.2 CoinGecko Market Data Pipeline
+
+{% mermaid
+   code="\nsequenceDiagram\n    participant Beat as Celery Beat\n    participant CGT as CoingeckoTask<br/>(every 30 min)\n    participant API as CoinGecko REST API\n    participant DB as TimescaleDB<br/>cg_data\n\n    Beat->>CGT: trigger every 30 min\n    loop Pages 1–8 (250 coins/page = 2000 total)\n        CGT->>API: GET /coins/markets?vs_currency=usd<br/>&order=market_cap_desc&per_page=250&page=N\n        API-->>CGT: JSON array of coin objects\n        Note over CGT: Retry with 30s backoff on failure\n    end\n\n    CGT->>CGT: Build DataFrame<br/>Parse ath_date, atl_date timestamps<br/>Compute days_since_ath<br/>Compute ATH proximity flags<br/>(ATH5, ATH10, ATH15, ATH>15)\n    CGT->>CGT: df.round(4)<br/>attach sys_timestamp (UTC)\n    CGT->>DB: executemany INSERT INTO cg_data<br/>(symbol, name, close, market_cap, rank,<br/>fdv, volume, high_24h, low_24h,<br/>price_change, ath, atl, flags…)\n" /%}
+
+### 5.3 Technical Indicator Calculation Pipeline
+
+{% mermaid
+   code="sequenceDiagram\n    participant Q as Redis Queue\n    participant CI as CalcIndicatorsTask\n    participant DB as TimescaleDB\n    participant PD as Pandas / Pandas-TA\n\n    Q->>CI: (table_name, [(last_id, asset), …])\n\n    loop For each (last_id, asset) pair\n        CI->>DB: SELECT last_id, O, H, L, C, V<br/>FROM {table} WHERE asset=?<br/>AND timestamp ≤ candle_ts<br/>ORDER BY timestamp DESC LIMIT 300\n        DB-->>CI: up to 300 rows (reversed → chronological)\n\n        alt Quote currency ≠ USDT\n            CI->>DB: SELECT close FROM h1_data<br/>WHERE asset = quote+'/USDT'\n            DB-->>CI: close price for volume conversion\n        end\n\n        CI->>PD: calc_indicators(df)\n        Note over PD: EMA(10, 36, 200)<br/>SMA(200)<br/>EHMA(180) — custom Ehlers Hull<br/>RSI(14)<br/>BBands(20, std=2)<br/>TD Sequential (up/down counts)<br/>Supertrend(7, 3)<br/>Range%, HighLowRange%, VolumeUSD\n\n        PD-->>CI: enriched DataFrame\n        CI->>CI: extract last row → 28-column tuple\n        CI->>DB: INSERT INTO indicators<br/>(last_id, timeframe, ema200, diff_ema200,<br/>diff_ema200_pct, sma200, rsi14, bbands,<br/>ema36, ehma180, td_seq, st73, ema10,<br/>range_pct, volume_usd, …)\n    end\n\n    CI->>DB: COMMIT\n\n" /%}
+
+### 5.4 Multi-Timeframe Continuous Aggregate Flow
+
+{% mermaid
+   code="flowchart TD\n    H1[(h1_data\\nHypertable\\n1h raw OHLCV)]\n\n    H1 -->|time_bucket 2h\\nContinuous Aggregate| H2[(h2_data)]\n    H1 -->|time_bucket 4h\\nContinuous Aggregate| H4[(h4_data)]\n    H1 -->|time_bucket 12h\\nContinuous Aggregate| H12[(h12_data)]\n    H1 -->|time_bucket 1 day\\nContinuous Aggregate| D1[(d1_data)]\n\n    D1 -->|time_bucket 3 days\\nContinuous Aggregate| D3[(d3_data)]\n    D1 -->|time_bucket 1 week\\nContinuous Aggregate| W1[(w1_data)]\n    D1 -->|time_bucket 1 month\\nContinuous Aggregate| M1[(m1_data)]\n\n    subgraph Aggregation[\"Each Continuous Aggregate computes\"]\n        AGG[\"LAST(last_id, timestamp) → last_id\nFIRST(open, timestamp) → open\nMAX(high) → high\nMIN(low) → low\nLAST(close, timestamp) → close\nSUM(volume) → volume\"]\n    end\n\n    subgraph RefreshPolicies[\"Auto-Refresh Policies\"]\n        RP1[\"h2: every 2h\\nh4: every 4h\\nh12: every 12h\"]\n        RP2[\"d1: every 1 day\\nd3: every 1 day\\nw1: every 1 week\\nm1: every 4 months\"]\n    end\n" /%}
+
+### 5.5 Database Cleanup Pipeline
+
+{% mermaid
+   code="flowchart LR\n    Beat[Celery Beat\\nWeekly trigger] --> DBC[DbCleanupTask]\n    DBC -->|DELETE stale indicators| IND[(indicators)]\n\n    subgraph Logic[\"Cleanup Logic (per timeframe)\"]\n        L1[\"Keep only the row with\\nmax(last_id) per\\n(asset, exchange, time_bucket)\\nfor the last 14 days\"]\n    end\n\n    DBC --- Logic" /%}
+
+---
+
+## 6. Database Schema
+
+### 6.1 Core Tables
+
+{% table %}
+- Table
+- Type
+- Description
+---
+- `h1_data`
+- Hypertable (partition by `timestamp`)
+- Primary 1-hour OHLCV candlestick data from all exchanges
+---
+- `indicators`
+- Hypertable (partition by `last_id`)
+- Pre-computed technical indicators linked to OHLCV rows via `last_id`
+---
+- `cg_data`
+- Hypertable (partition by `timestamp`)
+- CoinGecko market snapshot data (top 2000 coins, every 30 min)
+---
+- `asset_listing`
+- Regular table
+- Full universe of known assets per exchange including auto-computed `base`, `quote`, `contract`, `is_spot`
+---
+- `asset_declaration`
+- Regular table
+- Manual overrides — force-track specific assets not auto-discovered
+---
+- `logs`
+- Regular table
+- Execution log: task start/end timestamps per process name
+---
+- `flags`
+- Regular table
+- Arbitrary boolean flags keyed by asset base
+{% /table %}
+
+### 6.2 Continuous Aggregate Views (derived from h1_data)
+
+{% table %}
+- View
+- Bucket
+- Refresh Interval
+- Realtime
+---
+- `h2_data`
+- 2 hours
+- Every 2h
+- ✅
+---
+- `h4_data`
+- 4 hours
+- Every 4h
+- ✅
+---
+- `h12_data`
+- 12 hours
+- Every 12h
+- ✅
+---
+- `d1_data`
+- 1 day
+- Every 1d
+- ✅
+---
+- `d3_data`
+- 3 days
+- Every 1d
+- ✅
+---
+- `w1_data`
+- 1 week
+- Every 1w
+- ✅
+---
+- `m1_data`
+- 1 month
+- Every 4 months
+- ✅
+{% /table %}
+
+### 6.3 Entity Relationship Overview
+
+```
+erDiagram
+    h1_data {
+        bigserial last_id PK
+        text asset
+        text exchange
+        timestamptz timestamp
+        numeric open
+        numeric high
+        numeric low
+        numeric close
+        numeric volume
+    }
+
+    indicators {
+        bigint last_id FK
+        text timeframe
+        numeric ema200
+        numeric diff_ema200_pct
+        numeric sma200
+        numeric ema36
+        numeric ema10
+        numeric ehma180
+        numeric rsi14
+        numeric bbm202
+        numeric bbl202
+        numeric bbu202
+        numeric bbw202
+        integer td_seq_up
+        integer td_seq_down
+        numeric st73
+        numeric range_pct
+        numeric high_low_range_pct
+        numeric volume_usd
+    }
+
+    cg_data {
+        bigserial id PK
+        text symbol
+        text name
+        numeric close
+        numeric market_cap
+        integer market_cap_rank
+        numeric fdv
+        numeric ath
+        numeric atl
+        integer days_since_ath
+        boolean ath5
+        boolean ath10
+        boolean ath15
+        boolean ath90
+        timestamptz timestamp
+    }
+
+    asset_listing {
+        text asset
+        text exchange
+        boolean is_spot
+        text base
+        text quote
+        text contract
+        timestamptz timestamp
+    }
+
+    h1_data ||--o{ indicators : "last_id → triggers CalcIndicators"
+    h1_data ||--o{ h2_data : "continuous aggregate"
+    h1_data ||--o{ h4_data : "continuous aggregate"
+    h1_data ||--o{ d1_data : "continuous aggregate"
+    asset_listing }o--|| h1_data : "asset universe"
+
+```
+
+---
+
+## 7. Technical Indicator Suite
+
+### 7.1 Trend / Moving Averages
+
+{% table %}
+- Indicator
+- Parameters
+- Description
+---
+- EMA
+- 10, 36, 200
+- Exponential Moving Average — exponentially weighted recent price
+---
+- SMA
+- 200
+- Simple Moving Average — equal-weight 200-period mean
+---
+- EHMA
+- 180
+- Ehlers Hull Moving Average — custom implementation: `EMA(2×EMA(n/2) − EMA(n), √n)`. Reduces lag while smoothing noise
+{% /table %}
+
+### 7.2 Momentum
+
+{% table %}
+- Indicator
+- Parameters
+- Description
+---
+- RSI
+- 14
+- Relative Strength Index — overbought (>70) / oversold (<30) momentum oscillator
+{% /table %}
+
+### 7.3 Volatility
+
+{% table %}
+- Indicator
+- Parameters
+- Description
+---
+- Bollinger Bands
+- Length 20, Std 2
+- Middle (SMA20), Upper, Lower bands. Width measures volatility regime
+{% /table %}
+
+### 7.4 Trend Exhaustion / Reversal
+
+{% table %}
+- Indicator
+- Parameters
+- Description
+---
+- TD Sequential
+- —
+- Counts consecutive closes above/below 4-bars-ago close. Signals exhaustion at counts ≥9
+---
+- Supertrend
+- Period 7, Multiplier 3
+- ATR-based trend-following signal with dynamic support/resistance
+{% /table %}
+
+### 7.5 Derived / Risk Metrics
+
+{% table %}
+- Metric
+- Formula
+- Meaning
+---
+- `diff_ema200_pct`
+- `(close − EMA200) / close × 100`
+- % distance of price from long-term trend
+---
+- `range_pct`
+- `(close − open) / open × 100`
+- Candle body return
+---
+- `high_low_range_pct`
+- `(high − low) / low × 100`
+- Full candle volatility range
+---
+- `volume_usd`
+- `volume × close_in_usdt`
+- Normalised dollar volume across all quote currencies
+{% /table %}
+
+---
+
+## 8. Task Schedule Summary
+
+```
+gantt
+    title Recurring Task Schedule (rolling 1-hour window)
+    dateFormat HH:mm
+    axisFormat %H:%M
+
+    section Every Hour
+    CcxtInitTask (asset refresh + OHLCV fetch) :active, 00:00, 60m
+
+    section Every 30 min
+    CoingeckoTask (market data snapshot)       :active, 00:00, 30m
+    CoingeckoTask (market data snapshot)       :active, 00:30, 30m
+
+    section Triggered (event-driven)
+    CalcIndicatorsTask (after each OHLCV write) :crit, 00:05, 20m
+
+    section Weekly
+    DbCleanupTask (prune old indicators)        :done, 00:00, 10m
+
+```
+
+{% table %}
+- Task
+- Trigger
+- Description
+---
+- `CcxtInitTask`
+- Every 1 hour
+- Refresh asset universe, fetch latest 1h OHLCV from all 5 exchanges
+---
+- `AssetListingTask`
+- Chained from CcxtInitTask
+- Sync full market listings from 8 exchanges + CoinGecko
+---
+- `ExchangeTask` (×5)
+- Parallel group after listing
+- Per-exchange OHLCV fetch and DB write
+---
+- `CalcIndicatorsTask`
+- Event-driven (after OHLCV insert)
+- Compute all 15+ indicators for updated assets across all 8 timeframes
+---
+- `CoingeckoTask`
+- Every 30 minutes
+- Fetch top-2000 coins market data, compute ATH proximity flags
+---
+- `DbCleanupTask`
+- Weekly
+- Delete stale indicator rows, keep only latest per asset/timeframe bucket
+{% /table %}
+
+---
+
+## 9. Fault Tolerance & Reliability
+
+```
+flowchart TD
+    TASK[Task Execution]
+    TASK --> SUCCESS[Success → commit to DB]
+    TASK --> NETFAIL[NetworkError / API Failure]
+    NETFAIL -->|retry with countdown=30s\nmax_retries=5| TASK
+    NETFAIL -->|after 5 retries| DEAD[Task marked FAILED\nLogged to Celery]
+    TASK --> DBERR[DB Exception on single asset]
+    DBERR -->|print traceback\nskip asset, continue loop| TASK
+    SUCCESS --> LOG[UPDATE logs SET end=NOW\nwhere proc=task_name]
+
+```
+
+- **Per-task DB connection pooling:** each `DatabaseTask` subclass lazily opens and reuses a single `psycopg3` connection, logging start/end times to the `logs` table.
+- **Network retries:** `ccxt.NetworkError` triggers a Celery retry with a 30-second countdown; max 5 retries before the task is marked failed.
+- **Per-asset isolation:** exceptions for a single asset during OHLCV or indicator calculation are caught, printed, and skipped — the rest of the batch continues unaffected.
+- **DB transaction safety:** all writes use explicit `COMMIT` after batch inserts; failed batches can be rolled back without corrupting prior data.
+
+---
+
+## 10. Deployment
+
+### Prerequisites
+
+```
+# .env file required at project root
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=your_db
+REDIS_PASSWORD=your_redis_password
+COINGLASS_API_KEY=your_key   # optional
+
+```
+
+### Start the Stack
+
+```
+docker-compose up -d
+
+```
+
+This brings up four services: `postgresql`, `redis`, `worker` (Celery worker + beat scheduler), and `flower` (monitoring dashboard at `localhost:5556`).
+
+### Querying Data
+
+```
+-- Latest hourly candle for BTC/USDT on Binance
+SELECT * FROM h1_data
+WHERE asset = 'BTC/USDT' AND exchange = 'binance'
+ORDER BY timestamp DESC LIMIT 1;
+
+-- Latest indicators for BTC/USDT (1h timeframe)
+SELECT i.*
+FROM h1_data h
+JOIN indicators i ON i.last_id = h.last_id AND i.timeframe = '1h'
+WHERE h.asset = 'BTC/USDT' AND h.exchange = 'binance'
+ORDER BY h.timestamp DESC LIMIT 1;
+
+-- Top 100 coins by market cap from latest CoinGecko snapshot
+SELECT symbol, name, close, market_cap_rank, ath5, days_since_ath
+FROM cg_data
+WHERE sys_timestamp = (SELECT MAX(sys_timestamp) FROM cg_data)
+ORDER BY market_cap_rank ASC LIMIT 100;
+
+-- 4h candles via continuous aggregate
+SELECT * FROM h4_data
+WHERE asset = 'ETH/USDT' AND exchange = 'bybit'
+ORDER BY timestamp DESC LIMIT 48;
+
+```
+
+---
+
+## 11. Project Timeline
+
+```
+timeline
+    title Development Timeline
+    Nov 2023 : Phase 1 — Inception
+             : Initial repo setup
+             : Core architectural design
+
+    Feb 2025 : Phase 2 — Core Data Engine
+             : TimescaleDB hypertable system
+             : CCXT multi-exchange ingestion
+             : Celery/Redis worker architecture
+
+    Feb–May 2025 : Phase 3 — Indicator Engineering
+                 : pandas-ta integration
+                 : Custom EHMA implementation
+                 : TD Sequential signals
+
+    June 2025 : Phase 4 — DB Optimisation
+              : Continuous Aggregates (h2/h4/h12/d1/d3/w1/m1)
+              : Automated refresh policies
+              : Composite indexes for query performance
+
+    July 2025 : Phase 5 — Market Context & Completion
+              : CoinGecko full pipeline
+              : FDV and ATH proximity analytics
+              : Final stable release
+
+```
+
+---
+
+## 12. Key Design Decisions
+
+**TimescaleDB over vanilla PostgreSQL** — Hypertables with automatic time-based partitioning give orders-of-magnitude better `WHERE timestamp BETWEEN` query performance at scale. Continuous Aggregates eliminate the need to run separate cron jobs to build multi-timeframe candles.
+
+**Celery task chaining and grouping** — `CcxtInitTask` uses a `chain(AssetListingTask, group(ExchangeTask×5))` pattern, ensuring listings are always fresh before OHLCV fetching, while all five exchanges are queried in parallel.
+
+**Event-driven indicator calculation** — Rather than a separate scheduled indicator job, `CalcIndicatorsTask` is enqueued immediately after each successful OHLCV write. This keeps indicators current within seconds of new data arriving, with no polling overhead.
+
+**Dedicated worker separation** — Separating I/O-bound (data fetching) and CPU-bound (pandas/numpy indicator math) work into distinct worker processes prevents API concurrency from being starved by heavy computation.
+
+**Closed-candle ingestion** — The system always writes `rawData[-2]` (the second-to-last candle), guaranteeing only fully-closed candles enter the database and eliminating in-progress candle noise from analysis.
+
+---
+
+## 13. Potential Extensions
+
+- **Tick / sub-minute data** — CCXT supports websocket streams; integrating a websocket consumer would enable real-time tick storage.
+- **Alert engine** — A new Celery task could scan the `indicators` table for signal conditions (e.g., RSI < 30 + TD Sequential count ≥ 9) and dispatch notifications.
+- **Backtesting integration** — The stored multi-timeframe data and indicators provide a ready-made dataset for backtesting frameworks such as Backtrader or Vectorbt.
+- **Open Interest pipeline** — The codebase includes stub tables (`h4_oi`, `h4_oi_weight`) and a `CoinglassHelper` class, suggesting a planned derivatives/OI data layer.
+- **REST / GraphQL API** — A thin FastAPI layer over TimescaleDB would expose the data to external dashboards or trading bots.
