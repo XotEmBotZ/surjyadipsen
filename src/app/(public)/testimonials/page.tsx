@@ -1,14 +1,22 @@
 import { getReader } from "@/lib/reader";
-import { Container, PageHeader, Section } from "@/components/layout-components";
+import { Container, Section } from "@/components/layout-components";
 import { format } from "date-fns";
 import Link from "next/link";
+import { getBreadcrumbSchema } from "@/lib/seo";
+import { JSONLD } from "@/components/json-ld";
 
 export default async function TestimonialsPage() {
   const reader = await getReader();
   const testimonials = await reader.collections.testimonials.all();
 
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Home", item: "/" },
+    { name: "Testimonials", item: "/testimonials" },
+  ]);
+
   return (
     <main className="grow pb-32 md:pb-12">
+      <JSONLD data={breadcrumbSchema} />
       <Container>
         {/* Responsive Header - Matched with Projects Page */}
         <header className="border-primary mb-6 border-b-2 pb-4 md:mb-0 md:border-b-4 md:pb-6">

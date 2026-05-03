@@ -6,6 +6,13 @@ import { Container } from "@/components/layout-components";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
 import { format } from "date-fns";
 import { markdocTags, markdocNodes } from "@/components/custom-components";
+import { JSONLD } from "@/components/json-ld";
+import {
+  getAuthorSchema,
+  getBreadcrumbSchema,
+  getImageSchema,
+  getPublisherSchema,
+} from "@/lib/seo";
 
 export async function generateStaticParams() {
   const reader = await getReader();
@@ -22,9 +29,12 @@ export default async function Post({
 }) {
   const { slug } = await params;
   const reader = await getReader();
-  const details = await reader.singletons.details.read().catch(() => null);
-  const post = await reader.collections.posts.read(slug);
-  const allPosts = await reader.collections.posts.all();
+  const [details, post, allPosts, settings] = await Promise.all([
+    reader.singletons.details.read().catch(() => null),
+    reader.collections.posts.read(slug),
+    reader.collections.posts.all(),
+    reader.singletons.settings.read().catch(() => null),
+  ]);
 
   if (!post) {
     return (
@@ -50,6 +60,33 @@ export default async function Post({
     nodes: markdocNodes,
   });
 
+  const authorName = details?.name || "System Admin";
+  const siteName = settings?.siteName || "System Admin";
+
+  const blogPostingSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    datePublished: post.publishedDate
+      ? new Date(post.publishedDate).toISOString()
+      : undefined,
+    dateModified: post.lastUpdatedDate
+      ? new Date(post.lastUpdatedDate).toISOString()
+      : post.publishedDate
+        ? new Date(post.publishedDate).toISOString()
+        : undefined,
+    description: post.summary,
+    image: getImageSchema(post.image),
+    author: getAuthorSchema(authorName),
+    publisher: getPublisherSchema(siteName, settings?.favicon),
+  };
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Home", item: "/" },
+    { name: "Posts", item: "/posts" },
+    { name: post.title, item: `/posts/${slug}` },
+  ]);
+
   // Sort posts by date descending and take the most recent 3 (excluding current)
   const recentPosts = [...allPosts]
     .sort(
@@ -62,6 +99,7 @@ export default async function Post({
 
   return (
     <main className="mx-auto flex w-full grow flex-col items-center px-6 pb-32 md:max-w-9/10">
+      <JSONLD data={[blogPostingSchema, breadcrumbSchema]} />
       {/* Unified Header */}
       <header className="border-primary mb-12 flex w-full flex-col border-b-2 py-12 pb-12">
         <div className="gap-unit flex flex-col">
@@ -84,6 +122,11 @@ export default async function Post({
                 ? format(new Date(post.publishedDate), "yyyy-MM-dd")
                 : "----.--.--"}
             </span>
+            {post.lastUpdatedDate && (
+              <span>
+                UPDATED: {format(new Date(post.lastUpdatedDate), "yyyy-MM-dd")}
+              </span>
+            )}
             <span>
               AUTHOR: {details?.name?.toUpperCase() || "SYSTEM ADMIN"}
             </span>

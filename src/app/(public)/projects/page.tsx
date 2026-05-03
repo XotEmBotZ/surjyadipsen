@@ -1,6 +1,8 @@
 import { getReader } from "@/lib/reader";
 import config from "@/../keystatic.config";
 import DisplayProject from "./DisplayProjects";
+import { getItemListSchema, getBreadcrumbSchema } from "@/lib/seo";
+import { JSONLD } from "@/components/json-ld";
 
 export default async function ProjectsPage() {
   const reader = await getReader();
@@ -17,7 +19,22 @@ export default async function ProjectsPage() {
     };
   });
 
+  const itemListSchema = getItemListSchema(
+    serializedProjects.map((project, index) => ({
+      url: `/projects/${project.slug}`,
+      position: index + 1,
+    }))
+  );
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Home", item: "/" },
+    { name: "Projects", item: "/projects" },
+  ]);
+
   return (
-    <DisplayProject categories={categories} projects={serializedProjects} />
+    <>
+      <JSONLD data={[itemListSchema, breadcrumbSchema]} />
+      <DisplayProject categories={categories} projects={serializedProjects} />
+    </>
   );
 }

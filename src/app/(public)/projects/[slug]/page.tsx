@@ -6,6 +6,13 @@ import { Container } from "@/components/layout-components";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
 import { format } from "date-fns";
 import { markdocTags, markdocNodes } from "@/components/custom-components";
+import { JSONLD } from "@/components/json-ld";
+import {
+  getAuthorSchema,
+  getBreadcrumbSchema,
+  getImageSchema,
+  getPublisherSchema,
+} from "@/lib/seo";
 
 export async function generateStaticParams() {
   const reader = await getReader();
@@ -22,8 +29,12 @@ export default async function Project({
 }) {
   const { slug } = await params;
   const reader = await getReader();
-  const project = await reader.collections.projects.read(slug);
-  const allProjects = await reader.collections.projects.all();
+  const [details, project, allProjects, settings] = await Promise.all([
+    reader.singletons.details.read().catch(() => null),
+    reader.collections.projects.read(slug),
+    reader.collections.projects.all(),
+    reader.singletons.settings.read().catch(() => null),
+  ]);
 
   if (!project) {
     return (
@@ -59,6 +70,33 @@ export default async function Project({
       })
     : null;
 
+  const authorName = details?.name || "System Admin";
+  const siteName = settings?.siteName || "System Admin";
+
+  const creativeWorkSchema = {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: project.name,
+    description: project.summary,
+    datePublished: project.dateRange?.[0]
+      ? new Date(project.dateRange[0]).toISOString()
+      : undefined,
+    dateModified: project.lastUpdatedDate
+      ? new Date(project.lastUpdatedDate).toISOString()
+      : project.dateRange?.[0]
+        ? new Date(project.dateRange[0]).toISOString()
+        : undefined,
+    image: getImageSchema(project.images?.[0]),
+    author: getAuthorSchema(authorName),
+    publisher: getPublisherSchema(siteName, settings?.favicon),
+  };
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Home", item: "/" },
+    { name: "Projects", item: "/projects" },
+    { name: project.name, item: `/projects/${slug}` },
+  ]);
+
   const relatedProjects = allProjects
     .filter((p) => p.slug !== slug)
     .slice(0, 2);
@@ -67,8 +105,13 @@ export default async function Project({
     ? format(new Date(project.dateRange[0]), "yyyy.MM.dd")
     : "2024.10.12";
 
+  const updatedDateStr = project.lastUpdatedDate
+    ? format(new Date(project.lastUpdatedDate), "yyyy.MM.dd")
+    : null;
+
   return (
     <main className="mx-auto flex w-full grow flex-col items-center pb-32 md:max-w-9/10">
+      <JSONLD data={[creativeWorkSchema, breadcrumbSchema]} />
       <div className="flex w-full flex-col items-center px-6 py-6 wrap-break-word md:py-12">
         <article className="flex w-full flex-col gap-8 md:gap-12">
           {/* Unified Header */}
@@ -86,6 +129,7 @@ export default async function Project({
             </h1>
             <p className="font-mono-data text-secondary text-xs uppercase md:hidden">
               STAMP: {dateStr}
+              {updatedDateStr && ` // UPDATED: ${updatedDateStr}`}
             </p>
           </header>
 
@@ -99,6 +143,9 @@ export default async function Project({
                 <div className="flex flex-col gap-4">
                   {[
                     { label: "DURATION", value: project.duration || "N/A" },
+                    ...(updatedDateStr
+                      ? [{ label: "LAST UPDATED", value: updatedDateStr }]
+                      : []),
                     {
                       label: "STAKEHOLDERS",
                       value: project.stakeholders || "N/A",

@@ -1,6 +1,8 @@
 import { getReader } from "@/lib/reader";
 import { Container } from "@/components/layout-components";
 import DisplayPosts from "./DisplayPosts";
+import { getItemListSchema, getBreadcrumbSchema } from "@/lib/seo";
+import { JSONLD } from "@/components/json-ld";
 
 export default async function PostsPage() {
   const reader = await getReader();
@@ -22,8 +24,21 @@ export default async function PostsPage() {
     },
   }));
 
+  const itemListSchema = getItemListSchema(
+    serializedPosts.map((post, index) => ({
+      url: `/posts/${post.slug}`,
+      position: index + 1,
+    }))
+  );
+
+  const breadcrumbSchema = getBreadcrumbSchema([
+    { name: "Home", item: "/" },
+    { name: "Posts", item: "/posts" },
+  ]);
+
   return (
     <main className="grow pb-32 md:pb-12">
+      <JSONLD data={[itemListSchema, breadcrumbSchema]} />
       <Container>
         <DisplayPosts initialPosts={serializedPosts} categories={categories} />
       </Container>
