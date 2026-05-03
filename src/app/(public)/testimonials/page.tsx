@@ -7,7 +7,7 @@ export default async function TestimonialsPage() {
   const testimonials = await reader.collections.testimonials.all();
 
   return (
-    <main className="flex-grow pb-32 md:pb-12">
+    <main className="grow pb-32 md:pb-12">
       {/* Desktop Version */}
       <div className="hidden md:block">
         <Container>

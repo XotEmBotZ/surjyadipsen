@@ -1,5 +1,4 @@
 import { getReader } from "@/lib/reader";
-import React from "react";
 import Markdoc from "@markdoc/markdoc";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,7 +27,7 @@ export default async function Project({
 
   if (!project) {
     return (
-      <main className="flex-grow">
+      <main className="grow">
         <Container>
           <h1 className="font-headline-xl text-headline-xl uppercase">
             Project Not Found
@@ -69,7 +68,7 @@ export default async function Project({
     : "2024.10.12";
 
   return (
-    <main className="mx-auto flex w-full max-w-9/10 flex-grow flex-col items-center pb-32">
+    <main className="mx-auto flex w-full max-w-9/10 grow flex-col items-center pb-32">
       <div className="flex w-full flex-col items-center px-6 py-6 wrap-break-word md:max-w-9/10 md:py-12">
         <article className="flex w-full flex-col gap-8 md:gap-12">
           {/* Unified Header */}

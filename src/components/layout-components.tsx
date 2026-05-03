@@ -5,7 +5,7 @@ function Container({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-9/10 flex-grow flex-col gap-12 px-6 py-12",
+        "mx-auto flex w-full max-w-9/10 grow flex-col gap-12 px-6 py-12",
         className
       )}
       {...props}

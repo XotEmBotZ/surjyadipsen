@@ -1,5 +1,4 @@
 import { getReader } from "@/lib/reader";
-import React from "react";
 import Image from "next/image";
 import Markdoc from "@markdoc/markdoc";
 import Link from "next/link";
@@ -29,7 +28,7 @@ export default async function Post({
 
   if (!post) {
     return (
-      <main className="flex-grow">
+      <main className="grow">
         <Container>
           <h1 className="font-headline-xl text-headline-xl uppercase">
             Entry Not Found
@@ -62,7 +61,7 @@ export default async function Post({
     .slice(0, 3);
 
   return (
-    <main className="mx-auto flex w-full max-w-9/10 flex-grow flex-col items-center px-6 pb-32">
+    <main className="mx-auto flex w-full max-w-9/10 grow flex-col items-center px-6 pb-32">
       {/* Unified Header */}
       <header className="border-primary mb-12 flex w-full flex-col border-b-2 py-12 pb-12">
         <div className="gap-unit flex flex-col">
@@ -98,7 +97,7 @@ export default async function Post({
         {post.image && (
           <div className="order-1 md:col-span-9 md:col-start-4 md:row-start-1">
             <div className="border-primary bg-surface-card mb-8 border-2 p-2">
-              <div className="bg-surface-dim relative flex h-[400px] w-full items-center justify-center overflow-hidden">
+              <div className="bg-surface-dim relative flex h-100 w-full items-center justify-center overflow-hidden">
                 <Image
                   src={post.image}
                   alt=""

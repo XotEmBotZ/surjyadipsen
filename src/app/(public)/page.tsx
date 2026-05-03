@@ -307,7 +307,7 @@ export default async function HomePage() {
               <div className="bg-surface-muted border-primary font-technical-sm text-technical-sm border-b-2 p-2 text-center uppercase md:border-2 md:border-b-2">
                 BIOGRAPHY // MISSION STATEMENT
               </div>
-              <div className="border-primary bg-surface-card font-body-md text-md border-primary border-l-8 p-6 leading-relaxed uppercase italic opacity-90 md:border-2 md:p-8 md:text-lg">
+              <div className="border-primary bg-surface-card font-body-md text-md border-l-8 p-6 leading-relaxed uppercase italic opacity-90 md:border-2 md:p-8 md:text-lg">
                 {about?.bio ? (
                   <MarkdocRenderer
                     content={Markdoc.transform(Markdoc.parse(about.bio))}
@@ -406,7 +406,7 @@ export default async function HomePage() {
 
         {/* Project Archive Grid Section */}
         <section className="bg-surface-card border-primary flex flex-col border-b-2 md:gap-8 md:border-b-0 md:bg-transparent">
-          <div className="border-primary border-primary flex items-center gap-4 border-b-2 p-6 md:border-b-0 md:border-b-2 md:p-0 md:pb-2">
+          <div className="border-primary flex items-center gap-4 border-b-2 p-6 md:border-b-0 md:p-0 md:pb-2">
             <span className="text-xl font-black md:hidden">#</span>
             <h2 className="font-headline-lg md:text-headline-lg text-2xl uppercase">
               PROJECT ARCHIVE

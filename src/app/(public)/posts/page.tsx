@@ -23,7 +23,7 @@ export default async function PostsPage() {
   }));
 
   return (
-    <main className="flex-grow pb-32 md:pb-12">
+    <main className="grow pb-32 md:pb-12">
       <Container>
         <DisplayPosts initialPosts={serializedPosts} categories={categories} />
       </Container>

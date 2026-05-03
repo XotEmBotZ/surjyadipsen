@@ -130,7 +130,7 @@ export default function DisplayPosts({
 
       <div className="gap-gutter flex flex-col items-start lg:flex-row">
         {/* Unified Filter Sidebar/Bar */}
-        <aside className="bg-canvas border-primary lg:bg-surface-card sticky top-[73px] z-40 mb-6 flex w-full shrink-0 flex-col gap-0 lg:static lg:z-0 lg:mb-0 lg:w-[320px] lg:gap-8 lg:border-2 lg:p-6">
+        <aside className="bg-canvas border-primary lg:bg-surface-card sticky top-18.25 z-40 mb-6 flex w-full shrink-0 flex-col gap-0 lg:static lg:z-0 lg:mb-0 lg:w-[320px] lg:gap-8 lg:border-2 lg:p-6">
           {/* Desktop-style Search */}
           <div className="hidden flex-col gap-2 lg:flex">
             <label className="border-primary font-technical-sm text-technical-sm text-primary mb-2 border-b-2 pb-1 uppercase">
@@ -151,7 +151,7 @@ export default function DisplayPosts({
           <div className="no-scrollbar border-primary bg-surface-muted flex overflow-x-auto border-2 whitespace-nowrap lg:hidden">
             <button
               onClick={() => setSelectedCategories([])}
-              className={`border-primary font-technical-sm flex-shrink-0 border-r-2 px-4 py-2 uppercase transition-none ${
+              className={`border-primary font-technical-sm shrink-0 border-r-2 px-4 py-2 uppercase transition-none ${
                 selectedCategories.length === 0
                   ? "bg-primary text-canvas"
                   : "bg-surface-muted"
@@ -163,7 +163,7 @@ export default function DisplayPosts({
               <button
                 key={cat}
                 onClick={() => toggleCategory(cat)}
-                className={`border-primary font-technical-sm flex-shrink-0 border-r-2 px-4 py-2 uppercase transition-none ${
+                className={`border-primary font-technical-sm shrink-0 border-r-2 px-4 py-2 uppercase transition-none ${
                   selectedCategories.includes(cat)
                     ? "bg-primary text-canvas"
                     : "hover:bg-primary/10"
@@ -242,7 +242,7 @@ export default function DisplayPosts({
         </aside>
 
         {/* Main Content Area */}
-        <div className="w-full flex-grow">
+        <div className="w-full grow">
           {filteredPosts.length === 0 ? (
             <div className="border-primary bg-surface-card flex h-64 flex-col items-center justify-center border-2 p-8 text-center">
               <span className="font-headline-lg mb-4 text-2xl uppercase opacity-40">
@@ -267,7 +267,7 @@ export default function DisplayPosts({
                   className="border-primary bg-surface-card group/hero mb-8 block w-full border-2 p-4 transition-none"
                 >
                   {latestPost.entry.image && (
-                    <div className="border-primary bg-surface-dim relative mb-3 h-[240px] w-full overflow-hidden border-2">
+                    <div className="border-primary bg-surface-dim relative mb-3 h-60 w-full overflow-hidden border-2">
                       <Image
                         src={latestPost.entry.image}
                         alt=""

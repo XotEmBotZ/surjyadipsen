@@ -20,7 +20,7 @@ export function ScrollIndicator() {
         onClick={scrollToNext}
         aria-label="Scroll to next section"
       >
-        <ChevronDown className="size-6 stroke-[3]" />
+        <ChevronDown className="size-6 stroke-3" />
       </Button>
     </div>
   );
