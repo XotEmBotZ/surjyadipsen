@@ -366,26 +366,8 @@ erDiagram
 
 ## 8. Task Schedule Summary
 
-```
-gantt
-    title Recurring Task Schedule (rolling 1-hour window)
-    dateFormat HH:mm
-    axisFormat %H:%M
-
-    section Every Hour
-    CcxtInitTask (asset refresh + OHLCV fetch) :active, 00:00, 60m
-
-    section Every 30 min
-    CoingeckoTask (market data snapshot)       :active, 00:00, 30m
-    CoingeckoTask (market data snapshot)       :active, 00:30, 30m
-
-    section Triggered (event-driven)
-    CalcIndicatorsTask (after each OHLCV write) :crit, 00:05, 20m
-
-    section Weekly
-    DbCleanupTask (prune old indicators)        :done, 00:00, 10m
-
-```
+{% mermaid
+   code="gantt\n    title Recurring Task Schedule (rolling 1-hour window)\n    dateFormat HH:mm\n    axisFormat %H:%M\n\n    section Every Hour\n    CcxtInitTask (asset refresh + OHLCV fetch) :active, 00:00, 60m\n\n    section Every 30 min\n    CoingeckoTask (market data snapshot)       :active, 00:00, 30m\n    CoingeckoTask (market data snapshot)       :active, 00:30, 30m\n\n    section Triggered (event-driven)\n    CalcIndicatorsTask (after each OHLCV write) :crit, 00:05, 20m\n\n    section Weekly\n    DbCleanupTask (prune old indicators)        :done, 00:00, 10m\n" /%}
 
 {% table %}
 - Task
@@ -421,18 +403,8 @@ gantt
 
 ## 9. Fault Tolerance & Reliability
 
-```
-flowchart TD
-    TASK[Task Execution]
-    TASK --> SUCCESS[Success → commit to DB]
-    TASK --> NETFAIL[NetworkError / API Failure]
-    NETFAIL -->|retry with countdown=30s\nmax_retries=5| TASK
-    NETFAIL -->|after 5 retries| DEAD[Task marked FAILED\nLogged to Celery]
-    TASK --> DBERR[DB Exception on single asset]
-    DBERR -->|print traceback\nskip asset, continue loop| TASK
-    SUCCESS --> LOG[UPDATE logs SET end=NOW\nwhere proc=task_name]
-
-```
+{% mermaid
+   code="\nflowchart TD\n    TASK[Task Execution]\n    TASK --> SUCCESS[Success → commit to DB]\n    TASK --> NETFAIL[NetworkError / API Failure]\n    NETFAIL -->|retry with countdown=30s\\nmax_retries=5| TASK\n    NETFAIL -->|after 5 retries| DEAD[Task marked FAILED\\nLogged to Celery]\n    TASK --> DBERR[DB Exception on single asset]\n    DBERR -->|print traceback\\nskip asset, continue loop| TASK\n    SUCCESS --> LOG[UPDATE logs SET end=NOW\\nwhere proc=task_name]\n\n\n" /%}
 
 - **Per-task DB connection pooling:** each `DatabaseTask` subclass lazily opens and reuses a single `psycopg3` connection, logging start/end times to the `logs` table.
 - **Network retries:** `ccxt.NetworkError` triggers a Celery retry with a 30-second countdown; max 5 retries before the task is marked failed.
@@ -496,34 +468,8 @@ ORDER BY timestamp DESC LIMIT 48;
 
 ## 11. Project Timeline
 
-```
-timeline
-    title Development Timeline
-    Nov 2023 : Phase 1 — Inception
-             : Initial repo setup
-             : Core architectural design
-
-    Feb 2025 : Phase 2 — Core Data Engine
-             : TimescaleDB hypertable system
-             : CCXT multi-exchange ingestion
-             : Celery/Redis worker architecture
-
-    Feb–May 2025 : Phase 3 — Indicator Engineering
-                 : pandas-ta integration
-                 : Custom EHMA implementation
-                 : TD Sequential signals
-
-    June 2025 : Phase 4 — DB Optimisation
-              : Continuous Aggregates (h2/h4/h12/d1/d3/w1/m1)
-              : Automated refresh policies
-              : Composite indexes for query performance
-
-    July 2025 : Phase 5 — Market Context & Completion
-              : CoinGecko full pipeline
-              : FDV and ATH proximity analytics
-              : Final stable release
-
-```
+{% mermaid
+   code="\ntimeline\n    title Development Timeline\n    Nov 2023 : Phase 1 — Inception\n             : Initial repo setup\n             : Core architectural design\n\n    Feb 2025 : Phase 2 — Core Data Engine\n             : TimescaleDB hypertable system\n             : CCXT multi-exchange ingestion\n             : Celery/Redis worker architecture\n\n    Feb–May 2025 : Phase 3 — Indicator Engineering\n                 : pandas-ta integration\n                 : Custom EHMA implementation\n                 : TD Sequential signals\n\n    June 2025 : Phase 4 — DB Optimisation\n              : Continuous Aggregates (h2/h4/h12/d1/d3/w1/m1)\n              : Automated refresh policies\n              : Composite indexes for query performance\n\n    July 2025 : Phase 5 — Market Context & Completion\n              : CoinGecko full pipeline\n              : FDV and ATH proximity analytics\n              : Final stable release\n\n\n" /%}
 
 ---
 
