@@ -489,7 +489,11 @@ export default async function HomePage() {
           </div>
           <div className="flex-1">
             <div className="border-primary border-2 bg-transparent p-6">
-              <form action={sendContactMessage} className="flex flex-col gap-4">
+              <form
+                action={sendContactMessage}
+                className="flex flex-col gap-4"
+                id="contactForm"
+              >
                 <div className="flex flex-col gap-1">
                   <label className="font-technical-sm text-[10px] font-bold uppercase">
                     OPERATOR_IDENTITY
