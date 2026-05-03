@@ -20,6 +20,10 @@ export default config({
           label: "Published Date",
           defaultValue: { kind: "today" },
         }),
+        lastUpdatedDate: fields.date({
+          label: "Last Updated Date",
+          defaultValue: { kind: "today" },
+        }),
         summary: fields.text({ label: "Summary", multiline: true }),
         category: fields.select({
           label: "Category",
@@ -78,6 +82,9 @@ export default config({
         summary: fields.text({ label: "Summary", multiline: true }),
         dateRange: fields.array(fields.date({ label: "Date" }), {
           label: "Date Range",
+        }),
+        lastUpdatedDate: fields.date({
+          label: "Last Updated Date",
         }),
         status: fields.select({
           label: "Status",
