@@ -93,6 +93,59 @@ export const markdocTags = {
 };
 
 export const markdocNodes = {
+  document: {
+    render: "Article",
+  },
+  paragraph: {
+    render: "Paragraph",
+  },
+  heading: {
+    render: "Heading",
+    attributes: {
+      level: { type: Number },
+    },
+  },
+  list: {
+    render: "List",
+    attributes: {
+      ordered: { type: Boolean },
+    },
+  },
+  item: {
+    render: "Item",
+  },
+  blockquote: {
+    render: "Blockquote",
+  },
+  hr: {
+    render: "Hr",
+  },
+  code: {
+    render: "Code",
+    attributes: {
+      content: { type: String },
+    },
+  },
+  link: {
+    render: "Link",
+    attributes: {
+      href: { type: String },
+    },
+  },
+  image: {
+    render: "Image",
+    attributes: {
+      src: { type: String },
+      alt: { type: String },
+      title: { type: String },
+    },
+  },
+  strong: {
+    render: "Strong",
+  },
+  em: {
+    render: "Em",
+  },
   fence: {
     render: "Fence",
     attributes: {
