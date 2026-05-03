@@ -7,6 +7,7 @@ import { ScrollIndicator } from "@/components/ScrollIndicator";
 import { Open_Sans } from "next/font/google";
 import Markdoc from "@markdoc/markdoc";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
+import { sendContactMessage } from "@/app/actions/contact";
 
 const openSans = Open_Sans({ style: "normal" });
 
@@ -37,7 +38,7 @@ export default async function HomePage() {
         : 0;
       return dateB - dateA;
     })
-    .slice(0, 4);
+    .slice(0, 5);
 
   return (
     <main className="bg-canvas text-primary selection:bg-primary selection:text-canvas relative flex flex-col antialiased">
@@ -176,7 +177,7 @@ export default async function HomePage() {
       </section>
 
       {/* NEW SECTIONS FROM DESIGN GUIDE - MOBILE MORPHED */}
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-0 md:gap-24 md:px-6 md:py-24">
+      <div className="mx-auto flex w-full flex-col gap-0 md:max-w-7xl md:gap-24 md:px-6 md:py-24">
         {/* Professional Ledger Section */}
         <section className="border-primary flex flex-col border-t-2 md:border-t-0">
           <div className="bg-primary text-canvas flex items-center justify-between p-6 md:hidden">
@@ -307,7 +308,7 @@ export default async function HomePage() {
               <div className="bg-surface-muted border-primary font-technical-sm text-technical-sm border-b-2 p-2 text-center uppercase md:border-2 md:border-b-2">
                 BIOGRAPHY // MISSION STATEMENT
               </div>
-              <div className="border-primary bg-surface-card font-body-md text-md border-primary border-l-8 p-6 leading-relaxed uppercase italic opacity-90 md:border-2 md:p-8 md:text-lg">
+              <div className="border-primary bg-surface-card font-body-md text-md border-l-8 p-6 leading-relaxed uppercase italic opacity-90 md:border-2 md:p-8 md:text-lg">
                 {about?.bio ? (
                   <MarkdocRenderer
                     content={Markdoc.transform(Markdoc.parse(about.bio))}
@@ -406,7 +407,7 @@ export default async function HomePage() {
 
         {/* Project Archive Grid Section */}
         <section className="bg-surface-card border-primary flex flex-col border-b-2 md:gap-8 md:border-b-0 md:bg-transparent">
-          <div className="border-primary border-primary flex items-center gap-4 border-b-2 p-6 md:border-b-0 md:border-b-2 md:p-0 md:pb-2">
+          <div className="border-primary flex items-center gap-4 border-b-2 p-6 md:border-b-0 md:p-0 md:pb-2">
             <span className="text-xl font-black md:hidden">#</span>
             <h2 className="font-headline-lg md:text-headline-lg text-2xl uppercase">
               PROJECT ARCHIVE
@@ -464,7 +465,7 @@ export default async function HomePage() {
         </section>
 
         {/* Contact Section */}
-        <section className="bg-canvas md:bg-surface-card border-primary flex flex-col gap-12 p-6 md:flex-row md:border-2 md:p-8">
+        <section className="bg-surface-card border-primary flex flex-col gap-12 p-6 md:flex-row md:border-2 md:p-8">
           <div className="flex flex-1 flex-col gap-4">
             <h2 className="font-headline-lg md:text-headline-lg text-2xl tracking-tighter uppercase">
               INITIATE CONTACT
@@ -487,13 +488,19 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="flex-1">
-            <div className="border-primary border-2 bg-white p-6 md:bg-transparent">
-              <form className="flex flex-col gap-4">
+            <div className="border-primary border-2 bg-transparent p-6">
+              <form
+                action={sendContactMessage}
+                className="flex flex-col gap-4"
+                id="contactForm"
+              >
                 <div className="flex flex-col gap-1">
                   <label className="font-technical-sm text-[10px] font-bold uppercase">
                     OPERATOR_IDENTITY
                   </label>
                   <input
+                    name="name"
+                    required
                     className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
                     placeholder="FULL NAME"
                     type="text"
@@ -504,6 +511,8 @@ export default async function HomePage() {
                     CONTACT_LINK
                   </label>
                   <input
+                    name="email"
+                    required
                     className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
                     placeholder="EMAIL ADDRESS"
                     type="email"
@@ -514,6 +523,8 @@ export default async function HomePage() {
                     TRANSMISSION_DATA
                   </label>
                   <textarea
+                    name="message"
+                    required
                     className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
                     placeholder="MESSAGE CONTENT"
                     rows={4}
