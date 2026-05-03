@@ -7,7 +7,7 @@ import { ScrollIndicator } from "@/components/ScrollIndicator";
 import { Open_Sans } from "next/font/google";
 import Markdoc from "@markdoc/markdoc";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
-import { ContactForm } from "@/components/ContactForm";
+import { sendContactMessage } from "@/app/actions/contact";
 
 const openSans = Open_Sans({ style: "normal" });
 
@@ -489,7 +489,50 @@ export default async function HomePage() {
           </div>
           <div className="flex-1">
             <div className="border-primary border-2 bg-transparent p-6">
-              <ContactForm />
+              <form action={sendContactMessage} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="font-technical-sm text-[10px] font-bold uppercase">
+                    OPERATOR_IDENTITY
+                  </label>
+                  <input
+                    name="name"
+                    required
+                    className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
+                    placeholder="FULL NAME"
+                    type="text"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="font-technical-sm text-[10px] font-bold uppercase">
+                    CONTACT_LINK
+                  </label>
+                  <input
+                    name="email"
+                    required
+                    className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
+                    placeholder="EMAIL ADDRESS"
+                    type="email"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="font-technical-sm text-[10px] font-bold uppercase">
+                    TRANSMISSION_DATA
+                  </label>
+                  <textarea
+                    name="message"
+                    required
+                    className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
+                    placeholder="MESSAGE CONTENT"
+                    rows={4}
+                  ></textarea>
+                </div>
+                <button
+                  className="bg-primary text-canvas border-primary font-inter hover:bg-canvas hover:text-primary mt-2 border-2 py-4 font-extrabold tracking-widest uppercase transition-none"
+                  type="submit"
+                >
+                  SEND TRANSMISSION
+                </button>
+              </form>
             </div>
           </div>
         </section>
