@@ -8,7 +8,7 @@ export default async function NavBar() {
   const details = await reader.singletons.details.read().catch(() => null);
 
   return (
-    <header className="bg-canvas border-primary sticky top-0 z-50 mx-auto flex w-full items-center justify-between rounded-none border-b-2 px-6 py-3 transition-none duration-0 md:max-w-9/10 md:py-4">
+    <header className="bg-canvas border-primary sticky top-0 z-50 mx-auto flex w-full items-center justify-between rounded-none border-b-2 px-6 py-3 transition-none duration-0 md:py-4">
       <div className="flex items-center gap-8">
         <Link
           href="/"
