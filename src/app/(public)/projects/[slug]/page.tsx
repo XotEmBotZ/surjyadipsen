@@ -69,7 +69,7 @@ export default async function Project({
     : "2024.10.12";
 
   return (
-    <main className="mx-auto flex w-full max-w-full flex-grow flex-col items-center pb-32">
+    <main className="mx-auto flex w-full max-w-9/10 flex-grow flex-col items-center pb-32">
       <div className="flex w-full flex-col items-center px-6 py-6 wrap-break-word md:max-w-9/10 md:py-12">
         <article className="flex w-full flex-col gap-8 md:gap-12">
           {/* Unified Header */}
