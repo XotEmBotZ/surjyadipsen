@@ -61,7 +61,7 @@ export default async function Post({
     .slice(0, 3);
 
   return (
-    <main className="mx-auto flex w-full max-w-9/10 grow flex-col items-center px-6 pb-32">
+    <main className="mx-auto flex w-full grow flex-col items-center px-6 pb-32 md:max-w-9/10">
       {/* Unified Header */}
       <header className="border-primary mb-12 flex w-full flex-col border-b-2 py-12 pb-12">
         <div className="gap-unit flex flex-col">

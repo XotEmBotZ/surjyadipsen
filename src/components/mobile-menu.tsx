@@ -27,7 +27,7 @@ export function MobileMenu({ details }: MobileMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="bg-canvas border-primary animate-in slide-in-from-top fixed inset-0 top-18.25 z-50 flex flex-col border-t-2 p-6 duration-200">
+        <div className="bg-canvas border-primary animate-in slide-in-from-top fixed inset-0 top-[48px] z-50 flex flex-col border-t-2 p-6 duration-200 md:top-[72px]">
           <nav className="font-inter flex flex-col gap-4 text-lg font-bold tracking-tighter uppercase">
             <Link
               href="/projects"

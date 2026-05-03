@@ -5,7 +5,7 @@ function Container({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "mx-auto w-full max-w-7xl px-6 md:px-12 lg:px-24",
+        "mx-auto w-full px-6 md:max-w-7xl md:px-12 lg:px-24",
         className
       )}
       {...props}

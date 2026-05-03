@@ -3,7 +3,6 @@ import "../globals.css";
 import { getReader } from "@/lib/reader";
 import NavBar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { BottomNav } from "@/components/BottomNav";
 
 export async function generateMetadata(): Promise<Metadata> {
   const reader = await getReader();
@@ -35,7 +34,6 @@ export default async function RootLayout({
       <NavBar />
       <div className="grow">{children}</div>
       <Footer />
-      <BottomNav />
     </>
   );
 }

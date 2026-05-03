@@ -7,6 +7,7 @@ import { ScrollIndicator } from "@/components/ScrollIndicator";
 import { Open_Sans } from "next/font/google";
 import Markdoc from "@markdoc/markdoc";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
+import { ContactForm } from "@/components/ContactForm";
 
 const openSans = Open_Sans({ style: "normal" });
 
@@ -37,7 +38,7 @@ export default async function HomePage() {
         : 0;
       return dateB - dateA;
     })
-    .slice(0, 4);
+    .slice(0, 5);
 
   return (
     <main className="bg-canvas text-primary selection:bg-primary selection:text-canvas relative flex flex-col antialiased">
@@ -176,7 +177,7 @@ export default async function HomePage() {
       </section>
 
       {/* NEW SECTIONS FROM DESIGN GUIDE - MOBILE MORPHED */}
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-0 md:gap-24 md:px-6 md:py-24">
+      <div className="mx-auto flex w-full flex-col gap-0 md:max-w-7xl md:gap-24 md:px-6 md:py-24">
         {/* Professional Ledger Section */}
         <section className="border-primary flex flex-col border-t-2 md:border-t-0">
           <div className="bg-primary text-canvas flex items-center justify-between p-6 md:hidden">
@@ -464,7 +465,7 @@ export default async function HomePage() {
         </section>
 
         {/* Contact Section */}
-        <section className="bg-canvas md:bg-surface-card border-primary flex flex-col gap-12 p-6 md:flex-row md:border-2 md:p-8">
+        <section className="bg-surface-card border-primary flex flex-col gap-12 p-6 md:flex-row md:border-2 md:p-8">
           <div className="flex flex-1 flex-col gap-4">
             <h2 className="font-headline-lg md:text-headline-lg text-2xl tracking-tighter uppercase">
               INITIATE CONTACT
@@ -487,45 +488,8 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="flex-1">
-            <div className="border-primary border-2 bg-white p-6 md:bg-transparent">
-              <form className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="font-technical-sm text-[10px] font-bold uppercase">
-                    OPERATOR_IDENTITY
-                  </label>
-                  <input
-                    className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
-                    placeholder="FULL NAME"
-                    type="text"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="font-technical-sm text-[10px] font-bold uppercase">
-                    CONTACT_LINK
-                  </label>
-                  <input
-                    className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
-                    placeholder="EMAIL ADDRESS"
-                    type="email"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="font-technical-sm text-[10px] font-bold uppercase">
-                    TRANSMISSION_DATA
-                  </label>
-                  <textarea
-                    className="border-primary bg-canvas font-mono-data border-2 p-3 text-sm transition-all focus:border-l-8 focus:ring-0 focus:outline-none"
-                    placeholder="MESSAGE CONTENT"
-                    rows={4}
-                  ></textarea>
-                </div>
-                <button
-                  className="bg-primary text-canvas border-primary font-inter hover:bg-canvas hover:text-primary mt-2 border-2 py-4 font-extrabold tracking-widest uppercase transition-none"
-                  type="submit"
-                >
-                  SEND TRANSMISSION
-                </button>
-              </form>
+            <div className="border-primary border-2 bg-transparent p-6">
+              <ContactForm />
             </div>
           </div>
         </section>
