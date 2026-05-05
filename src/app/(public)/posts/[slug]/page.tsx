@@ -178,14 +178,14 @@ export default async function Post({
         {post.image && (
           <div className="order-1 md:col-span-9 md:col-start-4 md:row-start-1">
             <div className="border-primary bg-surface-card mb-8 border-2 p-2">
-              <div className="bg-surface-dim relative flex h-100 w-full items-center justify-center overflow-hidden">
-                <Image
-                  src={post.image}
-                  alt=""
-                  fill
-                  className="object-cover contrast-125 grayscale"
-                />
-              </div>
+              <Image
+                src={post.image}
+                alt=""
+                width={0}
+                height={0}
+                sizes="100vw"
+                className="h-auto w-full"
+              />
             </div>
           </div>
         )}

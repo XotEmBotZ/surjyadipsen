@@ -134,7 +134,7 @@ export default function DisplayProject({
                   }`}
                 >
                   <div
-                    className={`bg-surface-dim relative overflow-hidden contrast-125 grayscale ${
+                    className={`bg-surface-dim relative overflow-hidden ${
                       i % 3 === 0
                         ? "aspect-video md:aspect-21/9"
                         : "aspect-video"

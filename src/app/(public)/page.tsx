@@ -62,7 +62,7 @@ export default async function HomePage() {
             </h1>
 
             <div className="mt-16 flex flex-col items-center gap-0 md:flex-row md:items-start md:gap-10">
-              <div className="relative aspect-square max-h-90 w-1/2 shrink-0 p-1 grayscale">
+              <div className="relative aspect-square max-h-90 w-1/2 shrink-0 p-1">
                 {details?.picture ? (
                   <Image
                     src={details.picture}
@@ -420,7 +420,7 @@ export default async function HomePage() {
                   key={i}
                   className="border-primary bg-canvas flex flex-col border-2"
                 >
-                  <div className="border-primary bg-surface-muted group relative h-48 overflow-hidden border-b-2 grayscale md:aspect-video md:h-auto">
+                  <div className="border-primary bg-surface-muted group relative h-48 overflow-hidden border-b-2 md:aspect-video md:h-auto">
                     {project.entry.images?.[0] ? (
                       <Image
                         src={project.entry.images[0] as string}
