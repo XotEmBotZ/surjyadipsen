@@ -80,8 +80,12 @@ export default config({
       schema: {
         name: fields.slug({ name: { label: "Project Name" } }),
         summary: fields.text({ label: "Summary", multiline: true }),
-        dateRange: fields.array(fields.date({ label: "Date" }), {
-          label: "Date Range",
+        dateRange: fields.object({
+          start: fields.date({ label: "Start Date" }),
+          end: fields.date({
+            label: "End Date (Leave blank if ongoing)",
+            validation: { isRequired: false },
+          }),
         }),
         lastUpdatedDate: fields.date({
           label: "Last Updated Date",
@@ -149,8 +153,12 @@ export default config({
       schema: {
         company: fields.slug({ name: { label: "Company Name" } }),
         role: fields.text({ label: "Role" }),
-        dateRange: fields.array(fields.date({ label: "Date" }), {
-          label: "Date Range",
+        dateRange: fields.object({
+          start: fields.date({ label: "Start Date" }),
+          end: fields.date({
+            label: "End Date (Leave blank if ongoing)",
+            validation: { isRequired: false },
+          }),
         }),
         location: fields.text({ label: "Location" }),
         description: fields.text({ label: "Description", multiline: true }),
@@ -185,9 +193,12 @@ export default config({
           fields.object({
             institution: fields.text({ label: "Institution Name" }),
             degree: fields.text({ label: "Degree / Certificate" }),
-            dateRange: fields.array(fields.date({ label: "Date" }), {
-              label: "Date Range",
-              itemLabel: (props) => props.value || "Select Date",
+            dateRange: fields.object({
+              start: fields.date({ label: "Start Date" }),
+              end: fields.date({
+                label: "End Date (Leave blank if ongoing)",
+                validation: { isRequired: false },
+              }),
             }),
             location: fields.text({ label: "Location" }),
             grade: fields.text({ label: "Grade / GPA (Optional)" }),

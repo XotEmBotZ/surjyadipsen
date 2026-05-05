@@ -1,8 +1,8 @@
 company: freelance
 role: Independent Consultant
 dateRange:
-  - 2024-02-01
-  - 2025-01-01
+  start: 2024-02-01
+  end: 2025-01-01
 location: Remote
 description: >-
   Provided independent consulting services, focusing on high-performance systems

@@ -78,13 +78,13 @@ export default async function Project({
     "@type": "CreativeWork",
     name: project.name,
     description: project.summary,
-    datePublished: project.dateRange?.[0]
-      ? new Date(project.dateRange[0]).toISOString()
+    datePublished: project.dateRange?.start
+      ? new Date(project.dateRange.start).toISOString()
       : undefined,
     dateModified: project.lastUpdatedDate
       ? new Date(project.lastUpdatedDate).toISOString()
-      : project.dateRange?.[0]
-        ? new Date(project.dateRange[0]).toISOString()
+      : project.dateRange?.start
+        ? new Date(project.dateRange.start).toISOString()
         : undefined,
     image: getImageSchema(project.images?.[0]),
     author: getAuthorSchema(authorName),
@@ -101,8 +101,8 @@ export default async function Project({
     .filter((p) => p.slug !== slug)
     .slice(0, 2);
 
-  const dateStr = project.dateRange?.[0]
-    ? format(new Date(project.dateRange[0]), "yyyy.MM.dd")
+  const dateStr = project.dateRange?.start
+    ? format(new Date(project.dateRange.start), "yyyy.MM.dd")
     : "2024.10.12";
 
   const updatedDateStr = project.lastUpdatedDate

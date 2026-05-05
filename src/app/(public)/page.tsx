@@ -207,12 +207,12 @@ export default async function HomePage() {
                         {exp.entry.role}
                       </span>
                       <span className="font-mono-data text-mono-data text-xs md:text-sm">
-                        {exp.entry.dateRange?.[0]
-                          ? format(new Date(exp.entry.dateRange[0]), "yyyy")
+                        {exp.entry.dateRange.start
+                          ? format(new Date(exp.entry.dateRange.start), "yyyy")
                           : ""}
                         -
-                        {exp.entry.dateRange?.[1]
-                          ? format(new Date(exp.entry.dateRange[1]), "yyyy")
+                        {exp.entry.dateRange.end
+                          ? format(new Date(exp.entry.dateRange.end), "yyyy")
                           : "PRES"}
                       </span>
                     </div>
@@ -335,8 +335,8 @@ export default async function HomePage() {
                         {edu.degree}
                       </span>
                       <span className="font-mono-data text-[10px]">
-                        {edu.dateRange?.[1]
-                          ? format(new Date(edu.dateRange[1]), "yyyy")
+                        {edu.dateRange.end
+                          ? format(new Date(edu.dateRange.end), "yyyy")
                           : "PRES"}
                       </span>
                     </div>
