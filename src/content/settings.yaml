@@ -3,7 +3,7 @@ description: >-
   Helping individuals and organizations increase efficiency by automating
   repetitive tasks. Full Stack Developer specializing in scalable real-time data
   analytics and AI-driven automation.
-favicon: /assets/favicon.png
+ogImage: /images/settings/ogImage.png
 socialLinks:
   - platform: GitHub
     url: https://github.com/XotEmBotZ

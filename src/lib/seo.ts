@@ -35,17 +35,11 @@ export function getImageSchema(image?: string | null) {
 /**
  * Generates the publisher object.
  */
-export function getPublisherSchema(siteName: string, favicon?: string | null) {
+export function getPublisherSchema(siteName: string) {
   return {
     "@type": "Organization",
     name: siteName,
     url: SITE_URL,
-    logo: favicon
-      ? {
-          "@type": "ImageObject",
-          url: getAbsoluteUrl(favicon),
-        }
-      : undefined,
   };
 }
 

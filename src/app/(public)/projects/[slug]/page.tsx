@@ -13,6 +13,44 @@ import {
   getImageSchema,
   getPublisherSchema,
 } from "@/lib/seo";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const reader = await getReader();
+  const project = await reader.collections.projects.read(slug);
+
+  if (!project) return {};
+
+  const ogImage = project.images?.[0]
+    ? [{ url: project.images[0] as string }]
+    : [];
+
+  return {
+    title: `Project | ${project.name}`,
+    description: project.summary,
+    alternates: {
+      canonical: `/projects/${slug}`,
+    },
+    openGraph: {
+      title: `Project | ${project.name}`,
+      description: project.summary,
+      url: `/projects/${slug}`,
+      type: "article",
+      images: ogImage,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Project | ${project.name}`,
+      description: project.summary,
+      images: ogImage,
+    },
+  };
+}
 
 export async function generateStaticParams() {
   const reader = await getReader();
@@ -78,17 +116,17 @@ export default async function Project({
     "@type": "CreativeWork",
     name: project.name,
     description: project.summary,
-    datePublished: project.dateRange?.[0]
-      ? new Date(project.dateRange[0]).toISOString()
+    datePublished: project.dateRange?.start
+      ? new Date(project.dateRange.start).toISOString()
       : undefined,
     dateModified: project.lastUpdatedDate
       ? new Date(project.lastUpdatedDate).toISOString()
-      : project.dateRange?.[0]
-        ? new Date(project.dateRange[0]).toISOString()
+      : project.dateRange?.start
+        ? new Date(project.dateRange.start).toISOString()
         : undefined,
     image: getImageSchema(project.images?.[0]),
     author: getAuthorSchema(authorName),
-    publisher: getPublisherSchema(siteName, settings?.favicon),
+    publisher: getPublisherSchema(siteName),
   };
 
   const breadcrumbSchema = getBreadcrumbSchema([
@@ -101,8 +139,8 @@ export default async function Project({
     .filter((p) => p.slug !== slug)
     .slice(0, 2);
 
-  const dateStr = project.dateRange?.[0]
-    ? format(new Date(project.dateRange[0]), "yyyy.MM.dd")
+  const dateStr = project.dateRange?.start
+    ? format(new Date(project.dateRange.start), "yyyy.MM.dd")
     : "2024.10.12";
 
   const updatedDateStr = project.lastUpdatedDate

@@ -38,13 +38,13 @@ education:
   - institution: Vellore Institute of Technology
     degree: B.Tech CSE Core, Computer Science
     dateRange:
-      - 2025-01-01
-      - 2029-12-31
+      start: 2025-01-01
+      end: 2029-12-31
     location: Chennai, India
   - institution: Kendriya Vidyalaya Barrackpore (Afs)
     degree: Higher Secondary, Science (CS)
     dateRange:
-      - 2013-01-01
-      - 2025-12-31
+      start: 2013-01-01
+      end: 2025-12-31
     location: Barrackpore, West Bengal, India
     grade: 87%

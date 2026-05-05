@@ -4,6 +4,35 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { getBreadcrumbSchema } from "@/lib/seo";
 import { JSONLD } from "@/components/json-ld";
+import { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const reader = await getReader();
+  const settings = await reader.singletons.settings.read();
+  const ogImage = settings?.ogImage ? [{ url: settings.ogImage }] : [];
+
+  return {
+    title: "Testimonials",
+    description:
+      "Verified technical endorsements and field logs from collaborators and clients.",
+    alternates: {
+      canonical: "/testimonials",
+    },
+    openGraph: {
+      title: "Testimonials",
+      description:
+        "Verified technical endorsements and field logs from collaborators and clients.",
+      url: "/testimonials",
+      images: ogImage,
+    },
+    twitter: {
+      title: "Testimonials",
+      description:
+        "Verified technical endorsements and field logs from collaborators and clients.",
+      images: ogImage,
+    },
+  };
+}
 
 export default async function TestimonialsPage() {
   const reader = await getReader();
