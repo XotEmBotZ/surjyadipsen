@@ -116,7 +116,7 @@ export default async function Post({
     description: post.summary,
     image: getImageSchema(post.image),
     author: getAuthorSchema(authorName),
-    publisher: getPublisherSchema(siteName, settings?.favicon),
+    publisher: getPublisherSchema(siteName),
   };
 
   const breadcrumbSchema = getBreadcrumbSchema([

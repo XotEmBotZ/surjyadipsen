@@ -41,11 +41,6 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: ogImage ? [ogImage] : [],
     },
-    icons: settings?.favicon
-      ? {
-          icon: settings.favicon,
-        }
-      : undefined,
   };
 }
 

@@ -126,7 +126,7 @@ export default async function Project({
         : undefined,
     image: getImageSchema(project.images?.[0]),
     author: getAuthorSchema(authorName),
-    publisher: getPublisherSchema(siteName, settings?.favicon),
+    publisher: getPublisherSchema(siteName),
   };
 
   const breadcrumbSchema = getBreadcrumbSchema([
