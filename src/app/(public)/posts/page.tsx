@@ -3,6 +3,35 @@ import { Container } from "@/components/layout-components";
 import DisplayPosts from "./DisplayPosts";
 import { getItemListSchema, getBreadcrumbSchema } from "@/lib/seo";
 import { JSONLD } from "@/components/json-ld";
+import { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const reader = await getReader();
+  const settings = await reader.singletons.settings.read();
+  const ogImage = settings?.ogImage ? [{ url: settings.ogImage }] : [];
+
+  return {
+    title: "Journal | Posts",
+    description:
+      "Technical ledger and field notes on software engineering, automation, and AI.",
+    alternates: {
+      canonical: "/posts",
+    },
+    openGraph: {
+      title: "Journal | Posts",
+      description:
+        "Technical ledger and field notes on software engineering, automation, and AI.",
+      url: "/posts",
+      images: ogImage,
+    },
+    twitter: {
+      title: "Journal | Posts",
+      description:
+        "Technical ledger and field notes on software engineering, automation, and AI.",
+      images: ogImage,
+    },
+  };
+}
 
 export default async function PostsPage() {
   const reader = await getReader();

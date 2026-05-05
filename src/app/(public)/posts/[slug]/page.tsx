@@ -13,6 +13,44 @@ import {
   getImageSchema,
   getPublisherSchema,
 } from "@/lib/seo";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const reader = await getReader();
+  const post = await reader.collections.posts.read(slug);
+
+  if (!post) return {};
+
+  const ogImage = post.image ? [{ url: post.image }] : [];
+
+  return {
+    title: `Journal | ${post.title}`,
+    description: post.summary,
+    alternates: {
+      canonical: `/posts/${slug}`,
+    },
+    openGraph: {
+      title: `Journal | ${post.title}`,
+      description: post.summary,
+      url: `/posts/${slug}`,
+      type: "article",
+      publishedTime: post.publishedDate || undefined,
+      modifiedTime: post.lastUpdatedDate || post.publishedDate || undefined,
+      images: ogImage,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Journal | ${post.title}`,
+      description: post.summary,
+      images: ogImage,
+    },
+  };
+}
 
 export async function generateStaticParams() {
   const reader = await getReader();

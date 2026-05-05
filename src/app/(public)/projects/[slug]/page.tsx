@@ -13,6 +13,44 @@ import {
   getImageSchema,
   getPublisherSchema,
 } from "@/lib/seo";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const reader = await getReader();
+  const project = await reader.collections.projects.read(slug);
+
+  if (!project) return {};
+
+  const ogImage = project.images?.[0]
+    ? [{ url: project.images[0] as string }]
+    : [];
+
+  return {
+    title: `Project | ${project.name}`,
+    description: project.summary,
+    alternates: {
+      canonical: `/projects/${slug}`,
+    },
+    openGraph: {
+      title: `Project | ${project.name}`,
+      description: project.summary,
+      url: `/projects/${slug}`,
+      type: "article",
+      images: ogImage,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Project | ${project.name}`,
+      description: project.summary,
+      images: ogImage,
+    },
+  };
+}
 
 export async function generateStaticParams() {
   const reader = await getReader();
