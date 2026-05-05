@@ -4,6 +4,7 @@ import DisplayProject from "./DisplayProjects";
 import { getItemListSchema, getBreadcrumbSchema } from "@/lib/seo";
 import { JSONLD } from "@/components/json-ld";
 import { Metadata } from "next";
+import { sortProjects } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const reader = await getReader();
@@ -38,8 +39,8 @@ export default async function ProjectsPage() {
   const projects = await reader.collections.projects.all();
   const categories = config.collections.projects.schema.category.options;
 
-  // Sanitize projects by removing Markdoc functions which cannot be serialized
-  const serializedProjects = projects.map((p) => {
+  // Sort projects using utility and sanitize
+  const serializedProjects = sortProjects(projects).map((p) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { description, resolution, ...entry } = p.entry;
     return {

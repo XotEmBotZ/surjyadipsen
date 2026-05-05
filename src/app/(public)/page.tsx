@@ -8,6 +8,7 @@ import { Open_Sans } from "next/font/google";
 import Markdoc from "@markdoc/markdoc";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
 import { sendContactMessage } from "@/app/actions/contact";
+import { sortProjects } from "@/lib/utils";
 
 const openSans = Open_Sans({ style: "normal" });
 
@@ -23,6 +24,9 @@ export default async function HomePage() {
   const posts = (await reader.collections.posts.all().catch(() => [])) || [];
   const projects =
     (await reader.collections.projects.all().catch(() => [])) || [];
+
+  const sortedProjects = sortProjects(projects);
+
   const experiences =
     (await reader.collections.experience.all().catch(() => [])) || [];
   const testimonials =
@@ -414,8 +418,8 @@ export default async function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 md:gap-8 md:p-0 lg:grid-cols-3">
-            {projects.length > 0 ? (
-              projects.slice(0, 3).map((project, i) => (
+            {sortedProjects.length > 0 ? (
+              sortedProjects.slice(0, 3).map((project, i) => (
                 <div
                   key={i}
                   className="border-primary bg-canvas flex flex-col border-2"
