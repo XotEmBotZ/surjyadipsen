@@ -213,7 +213,7 @@ export default async function HomePage() {
                         -
                         {exp.entry.dateRange.end
                           ? format(new Date(exp.entry.dateRange.end), "yyyy")
-                          : "PRES"}
+                          : "PRESENT"}
                       </span>
                     </div>
                     <span className="font-technical-sm text-technical-sm uppercase opacity-60">
@@ -337,7 +337,7 @@ export default async function HomePage() {
                       <span className="font-mono-data text-[10px]">
                         {edu.dateRange.end
                           ? format(new Date(edu.dateRange.end), "yyyy")
-                          : "PRES"}
+                          : "PRESENT"}
                       </span>
                     </div>
                     <span className="font-technical-sm text-[10px] uppercase opacity-60">

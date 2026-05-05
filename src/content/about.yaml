@@ -41,6 +41,7 @@ education:
       start: 2025-01-01
       end: 2029-12-31
     location: Chennai, India
+    grade: N/A
   - institution: Kendriya Vidyalaya Barrackpore (Afs)
     degree: Higher Secondary, Science (CS)
     dateRange:

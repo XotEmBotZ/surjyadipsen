@@ -207,8 +207,8 @@ export default config({
             validation: { isRequired: true },
           }),
           end: fields.date({
-            label: "End Date",
-            validation: { isRequired: true },
+            label: "End Date (Leave blank if ongoing)",
+            validation: { isRequired: false },
           }),
         }),
         location: fields.text({
@@ -273,8 +273,8 @@ export default config({
                 validation: { isRequired: true },
               }),
               end: fields.date({
-                label: "End Date",
-                validation: { isRequired: true },
+                label: "End Date (Leave blank if ongoing)",
+                validation: { isRequired: false },
               }),
             }),
             location: fields.text({
@@ -282,8 +282,8 @@ export default config({
               validation: { isRequired: true },
             }),
             grade: fields.text({
-              label: "Grade / GPA",
-              validation: { isRequired: true },
+              label: "Grade / GPA (Optional)",
+              validation: { isRequired: false },
             }),
           }),
           {
