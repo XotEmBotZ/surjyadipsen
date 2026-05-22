@@ -66,7 +66,7 @@ const components = {
         return (
           <h3
             className={cn(
-              "font-technical-sm text-technical-sm mt-8 mb-4 font-bold uppercase",
+              "font-headline-md text-technical-sm mt-8 mb-4 font-bold uppercase",
               className
             )}
           >
