@@ -150,8 +150,15 @@ const components = {
     className?: string;
   }) => (
     <figure className={cn("my-8", className)}>
-      <div className="border-primary bg-surface-muted relative aspect-video overflow-hidden border-2 p-2 contrast-125 grayscale">
-        <Image src={src} alt={alt} fill className="object-cover" />
+      <div className="border-primary bg-surface-muted overflow-hidden border-2 p-2">
+        <Image
+          src={src}
+          alt={alt}
+          width={0}
+          height={0}
+          sizes="100vw"
+          className="h-auto w-full"
+        />
       </div>
       {(alt || title) && (
         <figcaption className="font-technical-sm mt-3 text-center text-[10px] tracking-tighter uppercase opacity-60">

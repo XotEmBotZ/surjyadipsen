@@ -8,6 +8,7 @@ import { Open_Sans } from "next/font/google";
 import Markdoc from "@markdoc/markdoc";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
 import { sendContactMessage } from "@/app/actions/contact";
+import { sortProjects } from "@/lib/utils";
 
 const openSans = Open_Sans({ style: "normal" });
 
@@ -23,6 +24,9 @@ export default async function HomePage() {
   const posts = (await reader.collections.posts.all().catch(() => [])) || [];
   const projects =
     (await reader.collections.projects.all().catch(() => [])) || [];
+
+  const sortedProjects = sortProjects(projects);
+
   const experiences =
     (await reader.collections.experience.all().catch(() => [])) || [];
   const testimonials =
@@ -62,7 +66,7 @@ export default async function HomePage() {
             </h1>
 
             <div className="mt-16 flex flex-col items-center gap-0 md:flex-row md:items-start md:gap-10">
-              <div className="relative aspect-square max-h-90 w-1/2 shrink-0 p-1 grayscale">
+              <div className="relative aspect-square max-h-90 w-1/2 shrink-0 p-1">
                 {details?.picture ? (
                   <Image
                     src={details.picture}
@@ -414,13 +418,13 @@ export default async function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 md:gap-8 md:p-0 lg:grid-cols-3">
-            {projects.length > 0 ? (
-              projects.slice(0, 3).map((project, i) => (
+            {sortedProjects.length > 0 ? (
+              sortedProjects.slice(0, 3).map((project, i) => (
                 <div
                   key={i}
                   className="border-primary bg-canvas flex flex-col border-2"
                 >
-                  <div className="border-primary bg-surface-muted group relative h-48 overflow-hidden border-b-2 grayscale md:aspect-video md:h-auto">
+                  <div className="border-primary bg-surface-muted group relative h-48 overflow-hidden border-b-2 md:aspect-video md:h-auto">
                     {project.entry.images?.[0] ? (
                       <Image
                         src={project.entry.images[0] as string}

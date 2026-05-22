@@ -218,13 +218,15 @@ export default async function Project({
                     {project.images.map((img, i) => (
                       <div
                         key={i}
-                        className="bg-surface-dim border-primary relative aspect-square overflow-hidden border-2 contrast-125 grayscale"
+                        className="border-primary overflow-hidden border-2"
                       >
                         <Image
                           src={img as string}
                           alt=""
-                          fill
-                          className="object-cover"
+                          width={0}
+                          height={0}
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          className="h-auto w-full"
                         />
                       </div>
                     ))}
@@ -284,16 +286,18 @@ export default async function Project({
             {/* Content Area (Order 1 on mobile, Order 2 on Desktop) */}
             <div className="order-1 flex min-w-0 flex-col gap-8 md:order-2">
               <div className="flex flex-col">
-                <div className="border-primary bg-surface-card relative aspect-video overflow-hidden border-2 p-0 contrast-125 grayscale md:p-2">
+                <div className="border-primary bg-surface-card overflow-hidden border-2 p-0 md:p-2">
                   {project.images?.[0] ? (
                     <Image
                       src={project.images[0] as string}
                       alt={project.name}
-                      fill
-                      className="object-cover"
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      className="h-auto w-full"
                     />
                   ) : (
-                    <div className="bg-surface-dim flex h-full w-full items-center justify-center text-2xl font-black uppercase opacity-10 md:text-6xl">
+                    <div className="bg-surface-dim flex h-64 w-full items-center justify-center text-2xl font-black uppercase opacity-10 md:text-6xl">
                       ARCHIVE_IMAGE
                     </div>
                   )}

@@ -267,12 +267,12 @@ export default function DisplayPosts({
                   className="border-primary bg-surface-card group/hero mb-8 block w-full border-2 p-4 transition-none"
                 >
                   {latestPost.entry.image && (
-                    <div className="border-primary bg-surface-dim relative mb-3 h-60 w-full overflow-hidden border-2">
+                    <div className="border-primary bg-surface-dim relative mb-3 aspect-video w-full overflow-hidden border-2">
                       <Image
                         src={latestPost.entry.image}
                         alt=""
                         fill
-                        className="object-cover grayscale transition-transform duration-500 group-hover/hero:scale-105"
+                        className="object-cover transition-transform duration-500 group-hover/hero:scale-105"
                       />
                     </div>
                   )}

@@ -133,13 +133,7 @@ export default function DisplayProject({
                     i % 3 === 0 ? "md:col-span-2" : "col-span-1"
                   }`}
                 >
-                  <div
-                    className={`bg-surface-dim relative overflow-hidden contrast-125 grayscale ${
-                      i % 3 === 0
-                        ? "aspect-video md:aspect-21/9"
-                        : "aspect-video"
-                    } h-64 border-b-2 md:h-auto md:border-b-0`}
-                  >
+                  <div className="bg-surface-dim relative aspect-video h-64 overflow-hidden border-b-2 md:h-auto md:border-b-0">
                     {project.entry.images?.[0] ? (
                       <Image
                         src={project.entry.images[0] as string}
