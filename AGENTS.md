@@ -11,3 +11,5 @@ You must work in CODER mode
 Styling and design guide is present in coverate/style always follow the mentioned guidlines and examples
 
 Always use bun
+
+NEVER USE npm
