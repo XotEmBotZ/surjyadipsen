@@ -247,7 +247,7 @@ export default async function Post({
             post.image ? "md:row-start-2" : "md:row-start-1"
           }`}
         >
-          <div className="prose-container bg-canvas border-primary border-2 p-8">
+          <div className="prose-container bg-canvas border-primary md:border-2 md:p-8">
             <MarkdocRenderer content={renderable} />
           </div>
         </div>
