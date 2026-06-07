@@ -1,6 +1,7 @@
 ---
 title: My slice of pi (Homelab setup)
 publishedDate: 2026-05-23
+lastUpdatedDate: 2026-06-07
 summary: >-
   Building a complex Raspberry Pi 5 home-lab using Docker Compose and custom
   local DNS, while avoiding common mistakes like bare-metal management,
@@ -14,9 +15,11 @@ image: /images/posts/my-slice-of-pi-homelab-setup/image.png
 ---
 #### This is the first installment in a three-part series.
 
-[**Initial setup (current)**](/posts/my-slice-of-pi-homelab-setup)
+[**Initial setup**](/posts/my-slice-of-pi-homelab-setup)
 
-[Setup Upgrade](/posts/baking-the-pi-lab-homelab-setup-pt2)
+[**Setup Upgrade**](/posts/baking-the-pi-lab-homelab-setup-pt2)
+
+[**Networking Upgrade**](/posts/topology-of-pi-homelab-setup-pt3)
 
 Most of you might have dreamed of running an home-lab, many already are. It takes a lot of time (and money) to run and manage a home-lab. I built an sufficiently complex setup with multi service , networking and most importantly easy access. After 3 years lets discuss all the mistakes, know hows, and what works.
 
@@ -24,19 +27,19 @@ Most of you might have dreamed of running an home-lab, many already are. It take
 
 ### 1.Not containerizing
 
-Running everything on bare metal is one of the most basic as well as the most time consuming mistake you can make. Running a script here and an app there is easier to do but nightmare to manage. On top of that good-luck managing dependencies, isolation and a good dashboard of any kind. Using docker/podman solves all the problems mentioned above.
+Running everything on bare metal is one of the most basic as well as the most time consuming mistake you can make. Running a script here and an app there is easier to do, but nightmare to manage. On top of that good-luck managing dependencies, isolation and a good dashboard of any kind. Using docker/podman solves all the problems mentioned above.
 
 ### 2.Not using docker compose
 
-Similar to running bare-metal. running containers without docker compose or its podman counterpart is not recommended. Although it solves few of the problems mentioned above, it doesn't have any form of easy configuration, version management nor does this approach recommendable. In case writing long commands, remembering to mention all environment variables, ports, volumes etc every time you start, stop or even change something is neither pleasing nor is easy. Using docker compose solves all those headaches by letting you write a detailed file and needing to memorize few basic common commands.
+Similar to running bare-metal. running containers without docker compose or its podman counterpart is not recommended. Although it solves few of the problems mentioned above, it doesn't have any form of easy configuration, version management nor does this approach recommendable. In case writing long commands,but remembering to mention all environment variables, ports, volumes etc every time you start, stop or even change something is neither pleasing nor is easy. Using docker compose solves all those headaches by letting you write a detailed file and needing to memorize few basic common commands.
 
 ### 3.Port based exposure
 
-The first thing we learn to do is expose a service by custom IP:PORT pair, most of us have once in our home-labbing journey have exposed a web based application by port, while this works for one or two service, remembering the exact port-number and the inconvenience it causes is much better solved by using an reverse proxy and custom DNS names (weather bought or made up local domains)
+The first thing we learn to do is expose a service by custom IP:PORT pair. Most of us have once in our home-labbing journey have exposed a web application by port, while this works for one or two service, remembering the exact port-number and the inconvenience it causes is much better solved by using an reverse proxy and custom DNS names (weather bought or made up local domains)
 
 ### 4.Running everything from boot SD card
 
-Which its the cheapest way to get started, staying on the SD card puts strain on it, drastically reducing its lifespan. For better speed and reliability its better to use an external/attached drive
+Although its the cheapest way to get started, staying on the SD card puts strain on it, drastically reducing its lifespan. For better speed and reliability its better to use an external/attached drive
 
 ### 5.Trying to make things perfect
 
