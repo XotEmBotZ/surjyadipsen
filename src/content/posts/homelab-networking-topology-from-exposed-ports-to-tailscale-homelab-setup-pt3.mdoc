@@ -26,7 +26,7 @@ image: >-
 
 [**Setup Upgrade**](/posts/baking-the-pi-lab-homelab-setup-pt2)
 
-[**Networking Upgrade**](/posts/topology-of-pi-homelab-setup-pt3)
+[**Networking Upgrade**](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3)
 
 ## Phase 1: Initial Docker Network Setup
 
@@ -41,7 +41,7 @@ My homelab journey started with simple networking: a router and a server running
 
 The above setup lasted for about 2 months. Constant changing and updating of my mental model was getting tough, prompting the need for a more robust setup. Next I adopted `Nginx Proxy Manager`, and employed a previously deployed Pi-hole for DNS. A local DNS name was allotted to the server and subsequent names for the services were added as CNAME records to that domain. On the Nginx side, the requests were being routed to the correct container based on the requested domain. This reduced the mental hurdle of remembering exact port numbers, though the applications were still accessible on those open ports.
 
-This deficiency was solved by assigning a common Docker network. As mentioned in [this](/posts/baking-the-pi-lab-homelab-setup-pt2) article, I have switched to using `docker-compose` for deployment and management of my services. The default network `infra-default` was designated as the "carrier" network to connect the proxy to all the running services. No ports were opened to the host network, reducing port conflicts. This resulted in the following network diagram:
+This deficiency was solved by assigning a common Docker network. As mentioned in [this](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3) article, I have switched to using `docker-compose` for deployment and management of my services. The default network `infra-default` was designated as the "carrier" network to connect the proxy to all the running services. No ports were opened to the host network, reducing port conflicts. This resulted in the following network diagram:
 
 {% accordion %}
 {% accordionItem title="Nginx setup diagram" %}
