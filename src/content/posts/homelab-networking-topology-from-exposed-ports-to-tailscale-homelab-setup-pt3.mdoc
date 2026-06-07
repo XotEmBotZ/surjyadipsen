@@ -1,0 +1,68 @@
+---
+title: >-
+  Homelab Networking Topology: From Exposed Ports to Tailscale(Homelab Setup
+  pt3)
+publishedDate: 2026-06-07
+summary: >-
+  Part 3 of my home-lab setup covers the evolution of its networking topology,
+  from simple port exposure to utilizing an isolated Docker network with Nginx, 
+  and finally moving to Tailscale and Traefik for seamless and secure remote
+  access.
+category: architecture
+tags:
+  - docker
+  - network
+  - tailscale
+  - traefik
+  - raspberry-pi
+  - homelab
+  - nginx
+image: >-
+  /images/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3/image.png
+---
+#### This is the last installment in a three-part series.
+
+[**Initial setup**](/posts/my-slice-of-pi-homelab-setup)
+
+[**Setup Upgrade**](/posts/baking-the-pi-lab-homelab-setup-pt2)
+
+[**Networking Upgrade**](/posts/topology-of-pi-homelab-setup-pt3)
+
+## Phase 1: Initial Docker Network Setup
+
+My homelab journey started with simple networking: a router and a server running Docker. Ports were exposed directly using Docker's default networking, which meant zero security and no remote access. Although no explicit configuration was required to put a server up, it was getting tedious remembering those port numbers. In a nutshell, the configurations looked like this:
+
+{% accordion %}
+{% accordionItem title="Old setup diagram" %}
+{% mermaid
+   code="architecture-beta\n    group wan(internet)[\"Public Internet (WAN)\"]\n    group lan(cloud)[\"Local Network (LAN)\"]\n    group server_node(server)[\"Homelab Server\"] in lan\n\n    %% WAN Component\n    service ext_traffic(internet)[\"External Traffic\"] in wan\n\n    %% LAN Components (Including a dedicated firewall block node)\n    service firewall(disk)[\"FIREWALL: BLOCKED\"] in lan\n    service router(internet)[\"Router\"] in lan\n    service laptop(server)[\"Client Laptop\"] in lan\n    \n    %% Applications inside the server\n    service app1(disk)[\"Application 1: Port 8080\"] in server_node\n    service app2(disk)[\"Application 2: Port 9000\"] in server_node\n\n    %% This forces the connection line from WAN to the LAN, but stops it at the Firewall block\n    ext_traffic:R --> L:firewall\n    \n    %% Authorized LAN Routing\n    laptop:R <--> L:router\n    router:R <--> L:app1\n    router:R <--> L:app2" /%}
+{% /accordionItem %}
+{% /accordion %}
+
+The above setup lasted for about 2 months. Constant changing and updating of my mental model was getting tough, prompting the need for a more robust setup. Next I adopted `Nginx Proxy Manager`, and employed a previously deployed Pi-hole for DNS. A local DNS name was allotted to the server and subsequent names for the services were added as CNAME records to that domain. On the Nginx side, the requests were being routed to the correct container based on the requested domain. This reduced the mental hurdle of remembering exact port numbers, though the applications were still accessible on those open ports.
+
+This deficiency was solved by assigning a common Docker network. As mentioned in [this](/posts/baking-the-pi-lab-homelab-setup-pt2) article, I have switched to using `docker-compose` for deployment and management of my services. The default network `infra-default` was designated as the "carrier" network to connect the proxy to all the running services. No ports were opened to the host network, reducing port conflicts. This resulted in the following network diagram:
+
+{% accordion %}
+{% accordionItem title="Nginx setup diagram" %}
+{% mermaid
+   code="architecture-beta\n    group wan(internet)[\"Public Internet (WAN)\"]\n    group lan(cloud)[\"Local Network (LAN)\"]\n    group server_node(server)[\"infra_default\"] in lan\n\n    %% WAN Component\n    service ext_traffic(internet)[\"External Traffic\"] in wan\n\n    %% LAN Components\n    service firewall(disk)[\"FIREWALL: BLOCKED\"] in lan\n    service router(internet)[\"Router\"] in lan\n    service laptop(server)[\"Client Laptop\"] in lan\n    \n    %% Reverse Proxy and Apps inside the server\n    service proxy(server)[\"Reverse Proxy\"] in server_node\n    service app1(disk)[\"Application 1\"] in server_node\n    service app2(disk)[\"Application 2\"] in server_node\n\n    %% WAN Traffic hits the firewall and stops\n    ext_traffic:R --> L:firewall\n    \n    %% LAN Traffic flow through Router -> Reverse Proxy -> Apps\n    laptop:R <--> L:router\n    router:R <--> L:proxy\n    \n    %% Proxy handles internal routing to the specific application ports\n    proxy:T <--> B:app1\n    proxy:B <--> T:app2" /%}
+{% /accordionItem %}
+{% /accordion %}
+
+Although this reduced the mental burden of remembering ports and IP addresses, it had some downsides too. The biggest downside was the growing management burden: for every new service, I had to manually assign CNAMEs and configure routing rules in `Nginx Proxy Manager`.
+
+This setup was my longest-standing architecture. As the rate of adding new services decreased, changing the setup was no longer a priority for me. This changed when a new requirement came into the picture, changing the whole networking architecture.
+
+## Phase 2: Remote Access with Tailscale and Traefik
+
+Suddenly, I needed a router, and being able to access the server outside the LAN became more important. I added a TP-Link USB dongle to act as the second network interface, and Tailscale was introduced to the setup.
+
+Tailscale took up the burden of connecting different devices and forming a Virtual LAN; devices in the tailnet behaved as if they were on the same local network. To address the router requirement, the Raspberry Pi's internal Wi-Fi adapter was set to Hotspot mode, relaying traffic through the USB adapter. This allowed fast connections to services when at home, while relying on the tailnet when client devices were not on the LAN. The switching of network paths was handled automatically by Tailscale. This simplification allowed me to point everything to the tailnet IP and leave the rest of the networking to Tailscale itself. Alongside this, the addition of Traefik greatly simplified my setup and reduced management overhead. However, moving to Tailscale added a strict requirement: internet access is needed to initiate the connection. This resulted in my final network setup as of this date.
+
+{% accordion %}
+{% accordionItem title="Final network setup" %}
+{% mermaid
+   code="architecture-beta\n    group wan(internet)[\"Public Internet (WAN)\"]\n    group lan(cloud)[\"Local Network (LAN)\"]\n    group server_node(server)[\"infra_default\"] in lan\n\n    %% WAN Component\n    service ext_traffic(internet)[\"External Traffic\"] in wan\n\n    %% LAN Components\n    service tailscale(disk)[\"Tailscale\"] in server_node\n    service router(internet)[\"Hotspot\"] in lan\n    service laptop(server)[\"Client Laptop\"] in lan\n    \n    %% Reverse Proxy and Apps inside the server\n    service proxy(server)[\"Reverse Proxy\"] in server_node\n    service app1(disk)[\"Application 1\"] in server_node\n    service app2(disk)[\"Application 2\"] in server_node\n\n    %% WAN Traffic hits the firewall and stops\n    ext_traffic:R --> L:tailscale\n    \n    %% LAN Traffic flow through Router -> Reverse Proxy -> Apps\n    laptop:R <--> L:router\n    router:R <--> L:proxy\n    proxy:L <--> L:tailscale\n    \n    %% Proxy handles internal routing to the specific application ports\n    proxy:T <--> B:app1\n    proxy:B <--> T:app2" /%}
+{% /accordionItem %}
+{% /accordion %}
