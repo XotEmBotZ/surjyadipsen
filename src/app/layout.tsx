@@ -8,7 +8,10 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <body className="font-body-md bg-canvas text-primary selection:bg-primary selection:text-canvas flex min-h-full flex-col">
+      <body
+        className="font-body-md bg-canvas text-primary selection:bg-primary selection:text-canvas flex min-h-full flex-col"
+        suppressHydrationWarning
+      >
         {children}
         <Analytics />
         <SpeedInsights />
