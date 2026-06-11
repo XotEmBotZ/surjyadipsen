@@ -9,6 +9,10 @@ import Markdoc from "@markdoc/markdoc";
 import { MarkdocRenderer } from "@/components/markdoc-renderer";
 import { sendContactMessage } from "@/app/actions/contact";
 import { sortProjects } from "@/lib/utils";
+import {
+  ResumeDownloadButton,
+  EndorsementsLink,
+} from "@/components/posthog-trackers";
 
 const openSans = Open_Sans({ style: "normal" });
 
@@ -119,7 +123,7 @@ export default async function HomePage() {
               <table className="w-full text-left font-mono text-xs md:text-sm">
                 <thead className="border-primary bg-secondary/30 border-b">
                   <tr className="text-secondary tracking-widest uppercase">
-                    <th className="px-5 py-3 font-normal">No.</th>
+                    <th className="px-1 py-3 font-normal md:px-5">No.</th>
                     <th className="px-5 py-3 font-normal">Topic</th>
                     <th className="px-5 py-3 text-right font-normal">Date</th>
                   </tr>
@@ -130,7 +134,9 @@ export default async function HomePage() {
                       key={post.slug}
                       className="group hover:bg-secondary/20 cursor-pointer transition-colors"
                     >
-                      <td className="text-secondary px-5 py-5">{i + 1}</td>
+                      <td className="text-secondary text-center md:p-5">
+                        {i + 1}
+                      </td>
                       <td className="px-5 py-5 font-bold decoration-2 group-hover:underline">
                         <Link
                           href={`/posts/${post.slug}`}
@@ -163,14 +169,12 @@ export default async function HomePage() {
               </table>
               {details?.resume && (
                 <div className="border-primary border-t-2 p-4">
-                  <a
+                  <ResumeDownloadButton
                     href={details.resume}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="bg-primary text-canvas hover:bg-canvas hover:text-primary border-primary flex items-center justify-center gap-2 border-2 px-6 py-3 font-mono text-xs font-bold tracking-widest uppercase transition-none"
                   >
                     <span>Download Technical Resume [PDF]</span>
-                  </a>
+                  </ResumeDownloadButton>
                 </div>
               )}
             </div>
@@ -194,49 +198,80 @@ export default async function HomePage() {
             PROFESSIONAL LEDGER
           </h2>
 
-          <div className="grid grid-cols-1 pt-3 md:grid-cols-3 md:gap-8">
+          <div className="flex gap-2 pt-3 md:gap-8">
             {/* Experience Column */}
             <div className="divide-primary border-primary flex flex-col divide-y-2 border-b-2 md:gap-4 md:divide-y-0 md:border-b-0">
               <div className="bg-surface-muted border-primary font-technical-sm text-technical-sm border-b-2 p-2 text-center uppercase md:border-2 md:border-b-2">
                 <span className="md:hidden">01 / </span>EXPERIENCE
               </div>
               {experiences.length > 0 ? (
-                experiences.slice(0, 2).map((exp, i) => (
-                  <div
-                    key={i}
-                    className="border-primary bg-surface-card flex flex-col gap-2 p-6 md:border-2 md:p-4"
-                  >
-                    <div className="border-primary flex items-start justify-between border-b-2 pb-2">
-                      <span className="font-bold uppercase">
-                        {exp.entry.role}
+                experiences
+                  .sort(
+                    (a, b) =>
+                      new Date(b.entry.dateRange.start).getTime() -
+                      new Date(a.entry.dateRange.start).getTime()
+                  )
+                  .slice(0, 2)
+                  .map((exp, i) => (
+                    <div
+                      key={i}
+                      className="border-primary bg-surface-card flex flex-col gap-2 p-6 md:border-2 md:p-4"
+                    >
+                      <div className="border-primary flex items-start justify-between border-b-2 pb-2">
+                        <span className="font-bold uppercase">
+                          {exp.entry.role}
+                        </span>
+                        <span className="font-mono-data text-mono-data text-xs md:text-sm">
+                          {exp.entry.dateRange.start
+                            ? format(
+                                new Date(exp.entry.dateRange.start),
+                                "MMM,yyyy"
+                              )
+                            : ""}
+                          -
+                          {exp.entry.dateRange.end
+                            ? format(
+                                new Date(exp.entry.dateRange.end),
+                                "MMM,yyyy"
+                              )
+                            : "PRESENT"}
+                        </span>
+                      </div>
+                      <span className="font-technical-sm text-technical-sm uppercase opacity-60">
+                        {exp.entry.company}
                       </span>
-                      <span className="font-mono-data text-mono-data text-xs md:text-sm">
-                        {exp.entry.dateRange.start
-                          ? format(new Date(exp.entry.dateRange.start), "yyyy")
-                          : ""}
-                        -
-                        {exp.entry.dateRange.end
-                          ? format(new Date(exp.entry.dateRange.end), "yyyy")
-                          : "PRESENT"}
-                      </span>
+                      <div className="flex flex-wrap gap-0.5">
+                        {exp.entry.techStack.slice(0, 15).map((tag, i) => (
+                          <span
+                            key={i}
+                            className="border-primary font-mono-data bg-canvas text-primary border-1 px-2 py-1 text-xs font-bold uppercase"
+                          >
+                            {tag}
+                          </span>
+                        )) || (
+                          <span className="uppercase opacity-40">
+                            No stack found.
+                          </span>
+                        )}
+                      </div>
+                      <div className="font-body-md mt-2 text-sm leading-relaxed uppercase opacity-80">
+                        {/* {exp.entry.role.toUpperCase()} AT{" "}
+                        {exp.entry.company.toUpperCase()} -{" "} */}
+                        {exp.entry.description}
+                      </div>
+                      <div className="mt-2 text-right text-xs">
+                        {exp.entry.location?.toUpperCase() || "REMOTE"}
+                      </div>
                     </div>
-                    <span className="font-technical-sm text-technical-sm uppercase opacity-60">
-                      {exp.entry.company}
-                    </span>
-                    <div className="font-body-md mt-2 line-clamp-3 text-sm leading-relaxed uppercase opacity-80">
-                      {exp.entry.role.toUpperCase()} AT{" "}
-                      {exp.entry.company.toUpperCase()} -{" "}
-                      {exp.entry.location?.toUpperCase() || "REMOTE"}
-                    </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <div className="font-mono-data p-12 text-center text-xs uppercase opacity-40">
                   No experience logged.
                 </div>
               )}
             </div>
-
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-8 md:pt-3">
             {/* Knowledge Column */}
             <div className="border-primary flex flex-col border-b-2 md:gap-4 md:border-b-0">
               <div className="bg-surface-muted border-primary font-technical-sm text-technical-sm border-b-2 p-2 text-center uppercase md:border-2 md:border-b-2">
@@ -312,7 +347,7 @@ export default async function HomePage() {
               <div className="bg-surface-muted border-primary font-technical-sm text-technical-sm border-b-2 p-2 text-center uppercase md:border-2 md:border-b-2">
                 BIOGRAPHY // MISSION STATEMENT
               </div>
-              <div className="border-primary bg-surface-card font-body-md text-md border-l-8 p-6 leading-relaxed uppercase italic opacity-90 md:border-2 md:p-8 md:text-lg">
+              <div className="border-primary bg-surface-card font-body-md text-md p-6 leading-relaxed uppercase italic opacity-90 md:border-2 md:border-l-8 md:p-8 md:text-lg">
                 {about?.bio ? (
                   <MarkdocRenderer
                     content={Markdoc.transform(Markdoc.parse(about.bio))}
@@ -400,12 +435,9 @@ export default async function HomePage() {
             )}
           </div>
           <div className="mt-4 flex justify-center">
-            <Link
-              href="/testimonials"
-              className="border-primary bg-primary text-canvas md:text-primary font-inter hover:bg-primary hover:text-canvas w-full border-2 px-8 py-4 text-center text-sm font-bold tracking-widest uppercase transition-none md:w-max md:bg-transparent md:py-3 md:tracking-tighter"
-            >
+            <EndorsementsLink className="border-primary bg-primary text-canvas md:text-primary font-inter hover:bg-primary hover:text-canvas w-full border-2 px-8 py-4 text-center text-sm font-bold tracking-widest uppercase transition-none md:w-max md:bg-transparent md:py-3 md:tracking-tighter">
               VIEW ALL ENDORSEMENTS
-            </Link>
+            </EndorsementsLink>
           </div>
         </section>
 

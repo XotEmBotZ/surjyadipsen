@@ -1,5 +1,7 @@
 "use server";
 
+import { getPostHogClient } from "@/lib/posthog-server";
+
 export async function sendContactMessage(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -54,6 +56,14 @@ export async function sendContactMessage(formData: FormData) {
     if (!response.ok) {
       throw new Error("Failed to send transmission to terminal.");
     }
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: email,
+      event: "contact_form_submitted",
+      properties: { name, email },
+    });
+    await posthog.shutdown();
   } catch (error) {
     console.error("Webhook Error:", error);
   }

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
+import posthog from "posthog-js";
 
 type Post = {
   slug: string;
@@ -33,7 +34,12 @@ export default function DisplayPosts({
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300); // 300ms buffer
+      if (searchQuery.trim()) {
+        posthog.capture("posts_search_performed", {
+          query: searchQuery.trim(),
+        });
+      }
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -99,9 +105,16 @@ export default function DisplayPosts({
   }, [filteredPosts]);
 
   const toggleCategory = (cat: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-    );
+    setSelectedCategories((prev) => {
+      const next = prev.includes(cat)
+        ? prev.filter((c) => c !== cat)
+        : [...prev, cat];
+      posthog.capture("posts_category_filtered", {
+        category: cat,
+        selected: !prev.includes(cat),
+      });
+      return next;
+    });
   };
 
   return (
