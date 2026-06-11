@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Container, Section } from "@/components/layout-components";
 import config from "@/../keystatic.config";
 import { Entry } from "@keystatic/core/reader";
+import posthog from "posthog-js";
 
 type ProjectList = {
   slug: string;
@@ -26,6 +27,11 @@ export default function DisplayProject({
   projects: ProjectList;
 }) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+    posthog.capture("project_category_filtered", { category });
+  };
 
   const filteredProjects =
     activeCategory === "all"
@@ -58,7 +64,7 @@ export default function DisplayProject({
               </div>
               <div className="flex flex-wrap gap-2 md:flex-col md:gap-2">
                 <button
-                  onClick={() => setActiveCategory("all")}
+                  onClick={() => handleCategoryChange("all")}
                   className={`font-mono-data text-mono-data border-primary/10 md:hover:bg-primary md:hover:text-canvas border px-3 py-1 text-left text-[9px] font-bold tracking-widest uppercase transition-none md:border-0 md:border-b md:px-2 md:text-sm md:font-normal md:tracking-normal ${
                     activeCategory === "all"
                       ? "bg-primary text-canvas"
@@ -70,7 +76,7 @@ export default function DisplayProject({
                 {categories.map((cat) => (
                   <button
                     key={cat.value}
-                    onClick={() => setActiveCategory(cat.value)}
+                    onClick={() => handleCategoryChange(cat.value)}
                     className={`font-mono-data text-mono-data border-primary md:hover:bg-primary md:hover:text-canvas border px-3 py-1 text-left text-[9px] font-bold tracking-widest uppercase transition-none md:border-0 md:border-b md:px-2 md:text-sm md:font-normal md:tracking-normal ${
                       activeCategory === cat.value
                         ? "bg-primary text-canvas md:bg-primary"

@@ -14,6 +14,7 @@ import {
   getPublisherSchema,
 } from "@/lib/seo";
 import { Metadata } from "next";
+import { PostHogPageView } from "@/components/posthog-trackers";
 
 export async function generateMetadata({
   params,
@@ -138,6 +139,10 @@ export default async function Post({
   return (
     <main className="mx-auto flex w-full grow flex-col items-center px-6 pb-32 md:max-w-9/10">
       <JSONLD data={[blogPostingSchema, breadcrumbSchema]} />
+      <PostHogPageView
+        event="post_viewed"
+        properties={{ slug, title: post.title, category: post.category }}
+      />
       {/* Unified Header */}
       <header className="border-primary mb-12 flex w-full flex-col border-b-2 py-12 pb-12">
         <div className="gap-unit flex flex-col">

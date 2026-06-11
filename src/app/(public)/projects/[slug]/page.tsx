@@ -14,6 +14,10 @@ import {
   getPublisherSchema,
 } from "@/lib/seo";
 import { Metadata } from "next";
+import {
+  PostHogPageView,
+  TrackedExternalLink,
+} from "@/components/posthog-trackers";
 
 export async function generateMetadata({
   params,
@@ -150,6 +154,10 @@ export default async function Project({
   return (
     <main className="mx-auto flex w-full grow flex-col items-center pb-32 md:max-w-9/10">
       <JSONLD data={[creativeWorkSchema, breadcrumbSchema]} />
+      <PostHogPageView
+        event="project_viewed"
+        properties={{ slug, name: project.name, category: project.category }}
+      />
       <div className="flex w-full flex-col items-center px-6 py-6 wrap-break-word md:py-12">
         <article className="flex w-full flex-col gap-8 md:gap-12">
           {/* Unified Header */}
@@ -259,24 +267,24 @@ export default async function Project({
                   </h3>
                   <div className="flex flex-col gap-3">
                     {project.repo && (
-                      <a
+                      <TrackedExternalLink
                         href={project.repo}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        event="project_repo_clicked"
+                        properties={{ slug, name: project.name }}
                         className="border-primary bg-primary text-canvas font-technical-sm hover:bg-canvas hover:text-primary border-2 py-4 text-center text-xs font-bold tracking-widest uppercase transition-none md:py-3 md:text-[10px]"
                       >
                         ACCESS_REPOSITORY
-                      </a>
+                      </TrackedExternalLink>
                     )}
                     {project.demo && (
-                      <a
+                      <TrackedExternalLink
                         href={project.demo}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        event="project_demo_clicked"
+                        properties={{ slug, name: project.name }}
                         className="border-primary bg-canvas text-primary font-technical-sm hover:bg-primary hover:text-canvas border-2 py-4 text-center text-xs font-bold tracking-widest uppercase transition-none md:py-3 md:text-[10px]"
                       >
                         VIEW_LIVE_DEMO
-                      </a>
+                      </TrackedExternalLink>
                     )}
                   </div>
                 </div>
