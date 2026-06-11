@@ -1,0 +1,18 @@
+company: India Meteorological Department
+role: Intern (Atmospheric Data Scientist)
+dateRange:
+  start: 2026-05-29
+  end: 2026-06-30
+location: New Delhi, India
+description: >-
+  Trained and fine tuned weather forecasting models, focusing on improvement
+  over preexisting models (i.e Pangu weather, Graphcast, Gencast, FGN, IMDGFS)
+  using distributed computing. Extensively compared the resulted
+  fine-tuned/trained model with state of the art solutions.
+techStack:
+  - Python
+  - JAX
+  - CUDA
+  - Flax NNX
+  - Pytorch
+  - Numpy, Scipy
