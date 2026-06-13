@@ -1,0 +1,57 @@
+---
+title: 'Self-Taught to Intern: My Tech Journey from Python to Data Engineering'
+publishedDate: 2026-06-13
+summary: >-
+  A reflection on my evolution as a developer, from learning Python during the
+  pandemic to exploring web development, Linux, data pipelines, homelabs, and
+  currently AI/ML.
+category: log
+tags:
+  - python
+  - linux
+  - web-development
+  - data-engineering
+  - homelab
+  - ai
+---
+## Starting with Python and Web Scraping
+
+My tech journey actually started roughly around 2020. I started learning **Python** to reduce my boredom of being confined to my house during the pandemic. Focusing on just learning a new (and hard) thing allowed me to be distracted from the constant stream of stress. I still remember learning about programming languages, conditional statements, loops and variables from YouTube. That was a wonderful time, spending my day writing small scripts, making small programs and witnessing them perform what I intended to do. It was extremely rewarding and the most interesting thing to me. After getting a grasp of basic **Python**, I laid my eyes on web scraping, learned about HTTP methods, **cURL**, **requests** and **HTML** parsing. At first it was tough and confusing (especially **CSS** selectors), but seeing my code auto-browsing the web for me was interesting enough to push through the confusion. At this time I started applying for freelance jobs. The freelance project I got during the pandemic played a large role in fueling my interest in this field.
+
+## Diving into Web Development with Django and Docker
+
+While writing code to surf the internet was fun, I wanted to learn how to make a website itself. Since I already knew **Python**, I began to learn **Django**. I learned about containerization (**Docker**), databases, virtual machines and surrounding concepts to host a website. Although I primarily focused on learning about Django's systems (which are very vast), I was also experimenting with **Linux** virtual machines, networking and other Linux server concepts (SSH, basic
+commands, etc.), through the usage of **VirtualBox**. Soon I was making websites for me, tracking crypto tickers, hotel management and many more.
+
+## Switching to Desktop Linux as a Developer
+
+During that explorative phase only I discovered **Linux**. Learning that it was used in most of the servers motivated me to also try it. What started with running multiple VMs using **VirtualBox** and **Ubuntu Server**, pinging one machine from another, grew into treating that as a "server setup". I learned more about containerization, how to properly host a website, package managers, and fundamentals of Linux, using that VM cluster. It was quite later I decided to give Desktop Linux a try. I started with dual booting my PC, fell in love with it, for months distro-hopped and finally settled on **Fedora** (at that time Fedora 36).
+
+A few months later, I gradually shifted and made **Linux** my primary OS. **Windows** was only kept just to play games. This configuration stuck for a very long time. Around mid 2025, when I noticed that I rarely touched Windows I decided to completely remove it. Although Linux offers most of the features and compatibility with well known software (and a few Windows software using **Wine** + **Proton** bridge), the experience was not completely polished. My HP Omen laptop's configuration software (Omen Gaming Hub) wasn't supported in Linux, vendor-specific easy BIOS/UEFI updates were not present, and most software to control/manage hardware was (and is) also not present.
+
+Although there are many community-maintained versions, they are not as polished nor a complete replacement for the first-party software (it's already quite impressive on giving a working configuration software by reverse engineering when the manufacturer doesn't provide any details).
+
+## A Shift Towards the Frontend: React and Next.js
+
+During this time, I learned about single-page applications (SPAs), mainly **React** and **jQuery**. Till then my complete focus was on back-end heavy websites using **Django**. The constant suggestions about this "new" type of websites pushed me through my initial skepticism into learning **JavaScript** and then React. The concepts of JavaScript were quite familiar and soon I dove into the React world. Initially I chose to learn vanilla **React** without any supporting framework, although I quickly switched to using React with **Next.js**. I started taking a few freelance jobs on creating landing pages and small websites. I was pretty inclined towards front-end jobs, learning **CSS** deeply, basic SEO concepts, specialized **HTML** tags, React optimizations, etc.
+
+## Shifting from Web Dev to Data Engineering
+
+From one of the freelance projects, I met with a client who was asking for a website showing consolidated information about his trades from multiple crypto exchanges. Later I got offered to work and maintain a different [project](/projects/crypto-data-aggregator). A project mainly requiring databases, server management, etc. He was very impressed with my initial offering of the system, leading to long term working in the project. During that phase, my goal shifted away from web development into server management, containerization, databases (mainly **PostgreSQL**), data ingestion, etc. I would majorly work with **Python** and **SQL** for parallel data ingestion of tickers from multiple exchanges, tracking new and removed tickers from exchanges and building analytics for the client. The ingestion code was purely written using Python, later which was extended into supporting multiple servers to reduce chances of hitting rate limits, using **Celery** (queue-worker system). After the initial implementation of data ingestion, I was requested to make analytics, watch-lists etc. on that ingested data. Having recently learned about the power of SQL, and since the analytics was also to be stored into databases, I created all the analytics using SQL only. Using PostgreSQL's triggers, views and other set of features, I delivered a quick, live updating (with the data) analytics platform on that data mainly using SQL. I still remember writing long (around 300-line) **SQL** queries and spending hours on the query analyzer to create those analytics right into the database without ever needing an external service updating them.
+
+Ultimately a few years later the project got sunsetted and with his permission, I published the source code (with all the history) [here](/projects/crypto-data-aggregator).
+
+## Getting Introduced to AI and ML
+
+Through the days of server management, upgrading software, managing uptime, and ensuring efficient data ingestion for the project, I got introduced to **AI** and **LLMs**. From there only my interest to build **ML** systems began. I started parallelly exploring ML models. Using LLMs I started learning fundamental knowledge of how ML models work and basic model types. Although I never reached the phase of implementing them on data and seeing their result.
+
+## Building a Homelab
+
+Around this time I got my hands on a **Raspberry Pi**. Applying my knowledge gained from the crypto project, I started building my own personal homelab. This became the place for my experiments, and self-hosted apps. I have spent numerous hours making the server perfect and pristine, started experimenting with local LLMs on my PC, trying out different open-source software and many more.
+
+I have documented my homelab journey in these three articles: [My slice of pi (Homelab](/posts/my-slice-of-pi-homelab-setup)
+[setup)](/posts/my-slice-of-pi-homelab-setup), [Baking the pi-lab (Homelab setup](/posts/baking-the-pi-lab-homelab-setup-pt2) [pt2)](/posts/baking-the-pi-lab-homelab-setup-pt2) and [Homelab Networking Topology: From Exposed Ports to Tailscale(Homelab Setup pt3)](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3)
+
+## College, Hackathons, and AI Internships
+
+Starting my first year of college was a new experience for me: a new environment, a new place to stay, and a whole new set of people to meet. My first semester was spent meeting new people, participating in hackathons and building projects (like [EdgeAI Hand Gesture Classifier](/projects/edgeai-hand-gesture-classifier)) with people. Joined a few clubs, got rejected from one, and more ups and downs; a truly amazing 1st sem it was. In between that I also got an internship offer for app development (GameUp by integrity-technologies). I shared my resume, got into contact, and surprisingly landed the job. I worked for about 8 months on that project. By that time, I was in my second semester and one of my professors got me in contact with a Scientist working in the India Meteorological Department. After working with him for a few months on a project, I got a chance of doing an offline internship in Mausam Bhawan. As of the date I am writing this, I am doing my 2nd week of internship in IMD Delhi, training and fine-tuning Weather Forecasting models (at last those days of me learning fundamentals of AI came into the picture).
