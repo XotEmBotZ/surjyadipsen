@@ -1,0 +1,90 @@
+---
+title: Baking the pi-lab (Homelab setup pt2)
+publishedDate: 2026-05-25
+lastUpdatedDate: 2026-06-07
+summary: >-
+  Part 2 of my home-lab setup details moving from Portainer to Docker Compose
+  via SSH for better control. I retired unused services, added new ones (like
+  Immich & Paperless-ngx), and implemented Traefik with Tailscale SSL and 
+  isolated networks for automated, secure routing.
+category: architecture
+tags:
+  - docker
+  - traefik
+  - network
+image: /images/posts/baking-the-pi-lab-homelab-setup-pt2/image.png
+---
+#### This is the second installment in a three-part series.
+
+[**Initial setup**](/posts/my-slice-of-pi-homelab-setup)
+
+[**Setup Upgrade**](/posts/baking-the-pi-lab-homelab-setup-pt2)
+
+[**Networking Upgrade**](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3)
+
+While the initial setup worked, it lacked the well deserved ergonomics and developer experience. Using portainer was fun, until you wanted to look at the files and run Bash commands directly on the host. No doubt portainer has its perks but for the purpose of my lab it didn't stand when compared to native SSH
+
+## Move away from Portainer
+
+The primary change was that I moved from portainer to managing all the containers myself using docker compose, the flow was as follows for a new application i wanted to add is the following
+
+{% mermaid
+   code="graph LR\n    create[Create a folder]-->\n    dockerCompose[Add docker-compose.yml]-->\n    env[Set environment variables]-->\n    cont[Pull/Build all containers]-->\n    endd[Run]\n" /%}
+
+### Why?
+
+Portainer is great if you want to run single container application, while most of my persistent containers were single container application i had started experimentation with multi container application/services. Even though portainer offered the docker compose edition I was not a fan of it. I preferred using SSH and making changes through it. It allowed greater control over my containers and most importantly the host.
+
+## Retirement of old & addition of new services
+
+With change in overall architecture I retired few services including uptimekuma, nginx proxy manager (replaced by traefik), pihole, gitea and minecraft server. Most was deemed no longer needed. The removal list includes most of the initial services, but addition of many new services was also done, such as
+
+**Actual Budget** – After trying out different budgeting solution, I settled on this. It features envelop budgeting, comprehensive dashboards, sync and mainly, offline usage (through PWA). It also offers an desktop app though the website is as powerful as the app.
+
+**Immich** – This is an alternative to google photos, I recently started maintaining a personal photo and video library and this serves as the perfect choice for that. It also features person detection and categorization, metadata extraction, grouping by location and many other features, serving as the ideal choice for self hosted photo-video library.
+
+**PaperlessNgx** – This is the best document aggregation platform that I have used, and saved a lot of time also. With inbuilt OCR, conversion to PDF and comprehensive search and filtration support this makes document management,  and most importantly retrieval much easier.
+
+**Reactive Resume** –  This is the self hosted resume builder with inbuilt MCP integration, allowing quick changes and tailoring of resume by AI.
+
+**Zerobyte** – This serves as the backup solution for the whole server, from all configurations, to backing important files, services data, etc. Zerobyte offers multiple repository options including google drive, S3 compatible storage, and many more making it suitable for my setup.
+
+### Discontinued services
+
+These includes very good projects. Although all of these is not currently running as they are not actively required, they served extremely well then I needed them.
+
+**Anytype** Server – Serves as the self hosted sync server for Anytype, discontinued as their public offering suffices my needs\
+**Audiobookshelf** – Serves as complete audio-book solution, discontinued due to lack of usage\
+**Booklore** – Serves as complete E-Book management solution, discontinued due to lack of usage\
+**Solidtime** – The best self-hosted time management software, discontinued due to lack of usage\
+**Pihole** – Add blocker and local DNS, discontinued as I moved to public DNS\
+**Nginx Proxy Manage**r – A web based Nginx container, featuring web based config editing, discontinued as I moved to Traefik\
+**Uptimekuma** – The comprehensive uptime monitor, discontinued as no external service was being monitored, when the server was down the monitor was also down, losing its usefulness\
+**Gitea** – The lightweight GitHub like git server, discontinued as it was only for experimentation purposes
+
+## Setting up Traefik
+
+Nginx proxy manager was a phenomenal choice to start with, but as the number of services grew it became a tedious task to manually update them one by one. Introduction of Traefik was the next best option for me. It offered many advantages for my use case such as
+
+- Everything in code
+- Integration with tailscale for SSL certs
+- configuration stays with the container
+- dashboard showing everything
+- Changes done automatically while starting/upgrading the container
+
+Since my whole lab setup was a bunch of isolated compose stacks Traefik couldn't reach them. Since i have moved away from opening a port for each service a common infra network was created. the infra network (`infra_default`) is just the default network of the compose project, which is added to all the web facing containers in all the application. and set as an external network in all remaining project
+
+This effectively increases the isolation between projects as there are no open ports (every compose project has its dedicated network to communicate between different services) and only the web facing container can be reached by Traefik and subsequently by the user
+
+{% accordion %}
+{% accordionItem title="Network Diagram" %}
+{% mermaid
+   code="C4Deployment\ntitle Self-Hosted Infrastructure\n\nPerson(user, \"User\", \"Accesses services\")\n\nDeployment_Node(vps, \"VPS Host\", \"Linux\") {\n\n    Deployment_Node(docker, \"Docker Engine\", \"Docker\") {\n\n        Container(traefik, \"Traefik\", \"Reverse Proxy\", \"Central ingress router\")\n\n        Deployment_Node(mc, \"Minecraft Stack\", \"Docker Network\") {\n\n            Container(velocity, \"Velocity Proxy\", \"Minecraft Proxy\", \"Routes players\")\n            \n            Container(sv1, \"Game Server 1\", \"Paper Server\")\n            Container(sv2, \"Game Server 2\", \"Paper Server\")\n\n            ContainerDb(psql, \"PostgreSQL\", \"Database\")\n\n            Rel(velocity, sv1, \"Routes players\")\n            Rel(velocity, sv2, \"Routes players\")\n\n            Rel(sv1, psql, \"Reads/Writes\")\n            Rel(sv2, psql, \"Reads/Writes\")\n            Rel(velocity, psql, \"Reads/Writes\")\n        }\n\n        Deployment_Node(pngx, \"Paperless-ngx Stack\", \"Docker Network\") {\n\n            Container(pweb, \"Paperless Webserver\", \"Web App\")\n\n            ContainerDb(pdb, \"Database\", \"PostgreSQL\")\n\n            Container(queue, \"Message Broker\", \"Redis\")\n\n            Container(tika, \"Apache Tika\", \"Text Extraction\")\n\n            Container(gotenberg, \"Gotenberg\", \"PDF Service\")\n\n            Rel(pweb, pdb, \"Reads/Writes\")\n            Rel(pweb, queue, \"Queues jobs\")\n\n            Rel(queue, tika, \"Extracts text\")\n            Rel(queue, gotenberg, \"Converts PDFs\")\n        }\n\n        Deployment_Node(ab, \"Actual Budget Stack\", \"Docker Network\") {\n\n            Container(abweb, \"Actual Budget Server\", \"Finance App\")\n        }\n\n        Deployment_Node(rr, \"Reactive Resume Stack\", \"Docker Network\") {\n\n            Container(rrweb, \"Reactive Resume\", \"Web App\")\n\n            ContainerDb(rrdb, \"Database\", \"PostgreSQL\")\n\n            Container(rrpdf, \"PDF Printer\", \"Renderer\")\n\n            Rel(rrweb, rrdb, \"Reads/Writes\")\n            Rel(rrweb, rrpdf, \"Generates PDFs\")\n        }\n    }\n}\n\nRel(user, traefik, \"HTTPS\")\n\nRel(traefik, velocity, \"Minecraft Routing\")\nRel(traefik, pweb, \"HTTPS Routing\")\nRel(traefik, abweb, \"HTTPS Routing\")\nRel(traefik, rrweb, \"HTTPS Routing\")\n\nUpdateElementStyle(user, $bgColor=\"#059669\", $fontColor=\"white\", $borderColor=\"#10b981\")\n\nUpdateElementStyle(traefik, $bgColor=\"#1f2937\", $fontColor=\"white\", $borderColor=\"#3b82f6\")\n\nUpdateElementStyle(psql, $bgColor=\"#1e293b\", $fontColor=\"white\")\nUpdateElementStyle(pdb, $bgColor=\"#1e293b\", $fontColor=\"white\")\nUpdateElementStyle(rrdb, $bgColor=\"#1e293b\", $fontColor=\"white\")\n\nUpdateLayoutConfig($c4ShapeInRow=\"2\", $c4BoundaryInRow=\"2\")" /%}
+{% /accordionItem %}
+{% /accordion %}
+
+Though this setup is more complex than expected, the benefits consistently outweighs the cost of implementation as well of usage. A detailed guide on the exact setup that I use will soon be available.
+
+---
+
+All this modifications to the server was fruitful at the end and resulted in many lifestyle upgrades of my own. Alongside these upgrades, upgrades in the networking was also made that was fruitful in usage of these services which will be discussed in the next part

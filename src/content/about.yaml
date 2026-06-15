@@ -19,14 +19,17 @@ skills:
   - category: Tools & Systems
     items:
       - Git
-      - Bun
       - Node
       - Docker
       - Linux
       - Nginx
       - Jenkins
+      - PBS
   - category: Frameworks
     items:
+      - JAX
+      - Flax NNX
+      - SciPy
       - Django
       - FastAPI
       - React
@@ -41,7 +44,7 @@ education:
       start: 2025-01-01
       end: 2029-12-31
     location: Chennai, India
-    grade: N/A
+    grade: "9.59"
   - institution: Kendriya Vidyalaya Barrackpore (Afs)
     degree: Higher Secondary, Science (CS)
     dateRange:
