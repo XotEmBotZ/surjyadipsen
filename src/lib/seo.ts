@@ -73,3 +73,43 @@ export function getItemListSchema(items: { url: string; position: number }[]) {
     })),
   };
 }
+
+/**
+ * Generates a ProfilePage schema.
+ */
+export function getProfilePageSchema(
+  profile: {
+    name: string;
+    alternateName: string;
+    identifier: string;
+    description: string;
+    picture: string;
+    socialLinks: readonly { readonly platform: string; readonly url: string }[];
+    dateModified: string;
+  },
+  postsCount: number
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    dateCreated: "2026-04-30T20:54:29+05:30",
+    dateModified: profile.dateModified
+      ? new Date(profile.dateModified).toISOString()
+      : undefined,
+    mainEntity: {
+      "@type": "Person",
+      name: profile.name,
+      alternateName: profile.alternateName,
+      identifier: profile.identifier,
+      agentInteractionStatistic: {
+        "@type": "InteractionCounter",
+        interactionType: "https://schema.org/WriteAction",
+        userInteractionCount: postsCount,
+      },
+      description: profile.description,
+      image: getAbsoluteUrl(profile.picture),
+      sameAs:
+        profile.socialLinks?.map((link) => link.url).filter(Boolean) || [],
+    },
+  };
+}

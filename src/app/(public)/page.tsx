@@ -13,6 +13,8 @@ import {
   ResumeDownloadButton,
   EndorsementsLink,
 } from "@/components/posthog-trackers";
+import { JSONLD } from "@/components/json-ld";
+import { getProfilePageSchema } from "@/lib/seo";
 
 const openSans = Open_Sans({ style: "normal" });
 
@@ -20,9 +22,11 @@ export default async function HomePage() {
   const reader = await getReader();
 
   // Safety checks for singletons
-  const settings = await reader.singletons.settings.read().catch(() => null);
-  const details = await reader.singletons.details.read().catch(() => null);
-  const about = await reader.singletons.about.read().catch(() => null);
+  const profile = await reader.singletons.profile.read().catch(() => null);
+
+  const settings = profile;
+  const details = profile;
+  const about = profile;
 
   // Safety checks for collections
   const posts = (await reader.collections.posts.all().catch(() => [])) || [];
@@ -48,8 +52,26 @@ export default async function HomePage() {
     })
     .slice(0, 5);
 
+  const profileSchema = profile
+    ? getProfilePageSchema(
+        {
+          name: profile.name,
+          alternateName: profile.alternateName,
+          identifier: profile.identifier,
+          description: profile.description,
+          picture: profile.picture,
+          socialLinks: profile.socialLinks || [],
+          dateModified: profile.dateModified,
+        },
+        posts.length
+      )
+    : null;
+
   return (
     <main className="bg-canvas text-primary selection:bg-primary selection:text-canvas relative flex flex-col antialiased">
+      {profileSchema && (
+        <JSONLD data={profileSchema as Record<string, unknown>} />
+      )}
       {/* Landing Section - KEPT AS IS per user directive */}
       <section
         id="landing"

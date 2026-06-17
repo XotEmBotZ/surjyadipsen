@@ -7,8 +7,8 @@ import { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
   const reader = await getReader();
-  const settings = await reader.singletons.settings.read();
-  const ogImage = settings?.ogImage ? [{ url: settings.ogImage }] : [];
+  const profile = await reader.singletons.profile.read();
+  const ogImage = profile?.ogImage ? [{ url: profile.ogImage }] : [];
 
   return {
     title: "Journal | Posts",

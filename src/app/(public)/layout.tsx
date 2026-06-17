@@ -6,12 +6,12 @@ import Footer from "@/components/Footer";
 
 export async function generateMetadata(): Promise<Metadata> {
   const reader = await getReader();
-  const settings = await reader.singletons.settings.read();
+  const profile = await reader.singletons.profile.read();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  const title = settings?.siteName || "Portfolio";
-  const description = settings?.description || "My professional portfolio";
-  const ogImage = settings?.ogImage ? { url: settings.ogImage } : undefined;
+  const title = profile?.siteName || "Portfolio";
+  const description = profile?.description || "My professional portfolio";
+  const ogImage = profile?.ogImage ? { url: profile.ogImage } : undefined;
 
   return {
     metadataBase: new URL(siteUrl),

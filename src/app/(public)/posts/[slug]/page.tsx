@@ -68,12 +68,13 @@ export default async function Post({
 }) {
   const { slug } = await params;
   const reader = await getReader();
-  const [details, post, allPosts, settings] = await Promise.all([
-    reader.singletons.details.read().catch(() => null),
+  const [profile, post, allPosts] = await Promise.all([
+    reader.singletons.profile.read().catch(() => null),
     reader.collections.posts.read(slug),
     reader.collections.posts.all(),
-    reader.singletons.settings.read().catch(() => null),
   ]);
+  const details = profile;
+  const settings = profile;
 
   if (!post) {
     return (
