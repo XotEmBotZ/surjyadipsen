@@ -71,12 +71,13 @@ export default async function Project({
 }) {
   const { slug } = await params;
   const reader = await getReader();
-  const [details, project, allProjects, settings] = await Promise.all([
-    reader.singletons.details.read().catch(() => null),
+  const [profile, project, allProjects] = await Promise.all([
+    reader.singletons.profile.read().catch(() => null),
     reader.collections.projects.read(slug),
     reader.collections.projects.all(),
-    reader.singletons.settings.read().catch(() => null),
   ]);
+  const details = profile;
+  const settings = profile;
 
   if (!project) {
     return (

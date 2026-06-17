@@ -4,8 +4,9 @@ import { MobileMenu } from "./mobile-menu";
 
 export default async function NavBar() {
   const reader = await getReader();
-  const settings = await reader.singletons.settings.read().catch(() => null);
-  const details = await reader.singletons.details.read().catch(() => null);
+  const profile = await reader.singletons.profile.read().catch(() => null);
+  const settings = profile;
+  const details = profile;
 
   return (
     <header className="bg-canvas border-primary sticky top-0 z-50 mx-auto flex w-full items-center justify-between rounded-none border-b-2 px-6 py-3 transition-none duration-0 md:py-4">

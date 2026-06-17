@@ -229,11 +229,80 @@ export default config({
     }),
   },
   singletons: {
-    about: singleton({
-      label: "About",
-      path: "src/content/about",
+    profile: singleton({
+      label: "Profile & Settings",
+      path: "src/content/profile",
       format: { data: "yaml" },
       schema: {
+        // Site Settings
+        siteName: fields.text({
+          label: "Site Name",
+          validation: { isRequired: true },
+        }),
+        description: fields.text({
+          label: "Site Description (SEO)",
+          multiline: true,
+          validation: { isRequired: true },
+        }),
+        ogImage: fields.image({
+          label: "Social Share Image (OG Image)",
+          directory: "public/images/settings",
+          publicPath: "/images/settings/",
+          validation: { isRequired: true },
+        }),
+        socialLinks: fields.array(
+          fields.object({
+            platform: fields.text({
+              label: "Platform Name",
+              validation: { isRequired: true },
+            }),
+            url: fields.url({
+              label: "URL",
+              validation: { isRequired: true },
+            }),
+          }),
+          {
+            label: "Additional Social Links",
+            itemLabel: (props) => props.fields.platform.value || "New Link",
+            validation: { length: { min: 1 } },
+          }
+        ),
+        copyright: fields.text({
+          label: "Copyright Text",
+          validation: { isRequired: true },
+        }),
+
+        // Personal Details
+        name: fields.text({
+          label: "Full Name",
+          validation: { isRequired: true },
+        }),
+        role: fields.text({
+          label: "Professional Role",
+          validation: { isRequired: true },
+        }),
+        email: fields.text({
+          label: "Email Address",
+          validation: { isRequired: true },
+        }),
+        location: fields.text({
+          label: "Location",
+          validation: { isRequired: true },
+        }),
+        picture: fields.image({
+          label: "Picture",
+          directory: "public/images/details",
+          publicPath: "/images/details/",
+          validation: { isRequired: true },
+        }),
+        resume: fields.file({
+          label: "Resume (PDF)",
+          directory: "public/assets",
+          publicPath: "/assets/",
+          validation: { isRequired: true },
+        }),
+
+        // About / Biography
         bio: fields.text({
           label: "Bio / Summary",
           multiline: true,
@@ -294,82 +363,21 @@ export default config({
             validation: { length: { min: 1 } },
           }
         ),
-      },
-    }),
-    details: singleton({
-      label: "Details",
-      path: "src/content/details",
-      format: { data: "yaml" },
-      schema: {
-        name: fields.text({
-          label: "Full Name",
+
+        // ProfilePage Structured Data specific fields
+        alternateName: fields.text({
+          label: "Alternate Name (e.g. XotEmBotZ)",
+          defaultValue: "XotEmBotZ",
           validation: { isRequired: true },
         }),
-        role: fields.text({
-          label: "Professional Role",
+        identifier: fields.text({
+          label: "Identifier (e.g. surjyadipsen)",
+          defaultValue: "surjyadipsen",
           validation: { isRequired: true },
         }),
-        email: fields.text({
-          label: "Email Address",
-          validation: { isRequired: true },
-        }),
-        location: fields.text({
-          label: "Location",
-          validation: { isRequired: true },
-        }),
-        picture: fields.image({
-          label: "Picture",
-          directory: "public/images/details",
-          publicPath: "/images/details/",
-          validation: { isRequired: true },
-        }),
-        resume: fields.file({
-          label: "Resume (PDF)",
-          directory: "public/assets",
-          publicPath: "/assets/",
-          validation: { isRequired: true },
-        }),
-      },
-    }),
-    settings: singleton({
-      label: "Settings",
-      path: "src/content/settings",
-      format: { data: "yaml" },
-      schema: {
-        siteName: fields.text({
-          label: "Site Name",
-          validation: { isRequired: true },
-        }),
-        description: fields.text({
-          label: "Site Description (SEO)",
-          multiline: true,
-          validation: { isRequired: true },
-        }),
-        ogImage: fields.image({
-          label: "Social Share Image (OG Image)",
-          directory: "public/images/settings",
-          publicPath: "/images/settings/",
-          validation: { isRequired: true },
-        }),
-        socialLinks: fields.array(
-          fields.object({
-            platform: fields.text({
-              label: "Platform Name",
-              validation: { isRequired: true },
-            }),
-            url: fields.url({
-              label: "URL",
-              validation: { isRequired: true },
-            }),
-          }),
-          {
-            label: "Additional Social Links",
-            itemLabel: (props) => props.fields.platform.value || "New Link",
-            validation: { length: { min: 1 } },
-          }
-        ),
-        copyright: fields.text({
-          label: "Copyright Text",
+        dateModified: fields.date({
+          label: "Profile Last Modified Date",
+          defaultValue: { kind: "today" },
           validation: { isRequired: true },
         }),
       },
