@@ -40,6 +40,10 @@ export function getPublisherSchema(siteName: string) {
     "@type": "Organization",
     name: siteName,
     url: SITE_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: getAbsoluteUrl("/favicon.ico"),
+    },
   };
 }
 
