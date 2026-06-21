@@ -14,6 +14,7 @@ export default config({
       path: "src/content/posts/*",
       entryLayout: "content",
       format: { contentField: "content", data: "yaml" },
+      columns: ["title", "publishedDate", "category"],
       schema: {
         title: fields.slug({ name: { label: "Title" } }),
         publishedDate: fields.date({

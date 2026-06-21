@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { reactComponents } from "./custom-components";
+import { codeToHtml } from "shiki";
 import {
   Table,
   TableHeader,
@@ -167,7 +168,7 @@ const components = {
       )}
     </figure>
   ),
-  Fence: ({
+  Fence: async ({
     content,
     language,
     className,
@@ -175,28 +176,49 @@ const components = {
     content: string;
     language?: string;
     className?: string;
-  }) => (
-    <div
-      className={cn(
-        "group border-primary bg-surface-muted/5 relative my-8 overflow-hidden border-2",
-        className
-      )}
-    >
-      {language && (
-        <div className="border-primary bg-surface-muted/20 flex items-center justify-between border-b-2 px-4 py-2">
-          <span className="font-technical-sm text-[10px] font-bold tracking-widest uppercase opacity-60">
-            SOURCE_CODE // {language.toUpperCase()}
-          </span>
-          <span className="font-mono-data text-[9px] opacity-30">
-            RAW_DATA_METRIC
-          </span>
-        </div>
-      )}
-      <pre className="font-mono-data overflow-x-auto p-4 text-xs leading-relaxed md:p-6">
-        <code className="bg-transparent! p-0!">{content}</code>
-      </pre>
-    </div>
-  ),
+  }) => {
+    let html = "";
+    try {
+      html = await codeToHtml(content, {
+        lang: language || "text",
+        theme: "min-light",
+      });
+    } catch {
+      // Fallback if language is not supported
+      try {
+        html = await codeToHtml(content, {
+          lang: "text",
+          theme: "min-light",
+        });
+      } catch {
+        html = `<pre><code>${content}</code></pre>`;
+      }
+    }
+
+    // Strip background-color inline styles to ensure transparency
+    html = html.replace(/background-color:\s*[^;]+;?/gi, "");
+
+    return (
+      <div
+        className={cn(
+          "group border-primary bg-surface-muted/5 relative my-4 overflow-hidden border-2",
+          className
+        )}
+      >
+        {language && (
+          <div className="border-primary bg-surface-muted/20 flex items-center justify-between border-b-2 p-1">
+            <span className="font-technical-sm text-[10px] font-bold tracking-widest uppercase opacity-60">
+              SOURCE_CODE // {language.toUpperCase()}
+            </span>
+          </div>
+        )}
+        <div
+          className="font-mono-data overflow-x-auto p-2 text-xs leading-relaxed [&>pre]:bg-transparent [&>pre]:p-0"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </div>
+    );
+  },
   Table: ({ children, className }: ComponentProps) => (
     <div className="my-8">
       <Table className={className}>{children}</Table>
