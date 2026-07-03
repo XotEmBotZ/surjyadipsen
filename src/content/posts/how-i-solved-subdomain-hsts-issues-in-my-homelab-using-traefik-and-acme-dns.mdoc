@@ -1,0 +1,247 @@
+---
+title: How I Solved Subdomain HSTS Issues in My Homelab Using Traefik & acme-dns
+publishedDate: 2026-07-03
+summary: >-
+  Upgrading a homelab setup to support HTTPS wildcard certificates using ACME
+  DNS-01 challenges with Traefik.
+category: architecture
+tags:
+  - homelab
+  - traefik
+  - ssl
+  - dns
+  - acme-dns
+---
+*This post is a follow-up/addendum to the three-part **[Homelab Setup](/projects/home-lab)** series.*
+
+Previously only one service in my homelab was served using HTTPS. For other service I didn't really need HTTPS. Since everything was flowing through Tailscale, most of the risks were mitigated. I only required HTTPS only for **Actual Budget**, as the most convenient way to get offline usage in a mobile device is to install it as PWA (which requires HTTPS and this requirement can't be bypassed easily).
+
+---
+
+# The problem with current setup
+
+## Only one HTTPS service
+
+Currently **Actual Budget** was served from the device URL (i.e., `xotembotz-rpi.taild3ff0d.ts.net`) instead of the standard `appname.local.surjyadipsen.in`. This allowed an HTTPS cert being issued using Tailscale (as detailed in the [Networking Upgrade (Part 3)](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3) post). The whole setup was like this
+
+```yaml
+#actual-budget/docker-compose.yaml
+...
+   labels:
+      - "traefik.http.routers.actual-ts.rule=Host(`xotembotz-rpi.taild3ff0d.ts.net`)"
+      - "traefik.http.routers.actual-ts.entrypoints=websecure"
+      - "traefik.http.routers.actual-ts.tls=true"
+      - "traefik.http.routers.actual-ts.tls.certresolver=ts"
+...
+```
+
+```yaml
+#infra/docker-compose.yaml
+...
+    command:
+      - "--certificatesresolvers.ts.tailscale=true"
+    ...
+    environment:
+      - TS_SOCKET=/var/run/tailscale/tailscaled.sock
+    ...
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/tailscale:/var/run/tailscale:z
+...
+```
+
+This worked perfectly until I had to issue another SSL cert for any other service. Although till now this requirement was not there, hence the configuration stayed like this for long.
+
+## Newly imposed HTTP Strict Transport Security requirement
+
+This site (`surjyadipsen.in`) is hosted in Vercel, which automatically applies HSTS throughout the whole domain. This spans even through subdomains which include my homelab stack. Previous attempts on restricting it on the website only have failed. This results in a tedious step of removing all the site data after I visit this website, for being able to connect to my other self-hosted services hosted through HTTP only (i.e. most of them).
+
+# What changed?
+
+Recently I rebooted a previously deprecated service **Booklore** (which was retired in [Part 2](/posts/baking-the-pi-lab-homelab-setup-pt2) of the series), for effective reading experience in mobile devices. I wanted to install it as a PWA, but the present configuration was not suitable for this.
+
+Since I purchased the domain on Hostinger which doesn't have an API to manage the records, standard Let's Encrypt certs were not possible.
+
+This new requirement launched my search for an easy, low-maintenance setup to accommodate the requirement without widely disturbing most of the setup.
+
+My requirement for the search was as follows
+
+1. **Non-invasive** – I should be able to control which service gets HTTPS and which doesn't.
+1. **Least changes** – The solution must not disturb existing setups, or cause massive configuration changes.
+1. **Maintainability** – The solution should require the least amount of manual effort after proper setup.
+1. **Low cost** – The solution must be of low cost.
+
+Based on these requirements, I started looking for adequate solutions. Here is the list of everything I looked into
+
+### Force Bypass via Chromium Flags
+
+Bypassing HTTPS requirements using Chromium flags (`chrome://flags/#unsaved-treat-insecure-as-secure`) was the first option I thought of. After a bit of research, it became evident that this was not suitable solution of this use case.
+
+The services were hosted on a Raspberry Pi and connected through Tailscale (which serves the device using `100.x.x.x`) is not considered a local IP. Alongside this, I also didn't want to change the browser behavior itself for a single site.
+
+### Set cloudflare as my DNS nameserver
+
+Although this was a bit tempting, actually implementing this would increase my mental load of maintaining another account which I didn't really need. Using Cloudflare would solve the DNS challenge issue and let me use standard Let's Encrypt to issue SSL certs for all my services, I decided to keep this as a last resort option. The friction of managing another account is not what I was comfortable with. (violates requirement 2.Least changes and 3.Maintainability)
+
+### Split tailscale certs (The Tailscale Way)
+
+Tailscale in its current configuration already allots me one SSL cert per device. This leaves me with the following options if I decided to go with this option
+
+- **Each service as its own device** – This approach would require complete dismantling of the current network stack and would require one extra container per service. It also has a limitation on the number of services I can host before I reach the free tier limit. (violates all the requirements)
+- **Each service as a subpath** – This would solve the device limit issue, but most services I run assume they are being deployed on their own domains rather than on a subpath. Making this change is itself extremely invasive as whole traefik setup needs to change, and adds an extra maintenance burden of checking, fixing applications which assume that they are hosted in their own domains. (violates requirement 1.Non invasive,2.Least changes and 3.Maintainability)
+
+### Using acme servers
+
+An ACME (Automated Certificate Management Environment) server is the core backend engine that automates the entire lifecycle of SSL/TLS certificates. I had two choices here
+
+- **Self-hosted ACME server** – This would require an open connection between the device it is hosted on and the Let's Encrypt servers, since my services were on a private tailnet this was not possible without a VPS (or a costly ISP upgrade). Hence this option would violate requirement 3.Maintainability and 4.Low Cost
+- **Public ACME servers** – Upon consideration and evaluation this is the best of all worlds, has low cost (virtually zero for end user), easy maintainability (basically nothing after setup), I can decide which services get SSL and most importantly it requires the least changes.
+
+# The upgrade
+
+`acme-dns.io` is specifically the exact service required in this situation. Though it required few tries to get right, the end result was exactly what I wanted. Hence I decided to add it as another cert provider in Traefik, then I can select and choose which of my services will get SSL connections from the `docker-compose` only. Traefik would manage the rest things from certificate expiry and allocations. Although there were major roadblocks which I needed to overcome.
+
+## Preliminary setup
+
+First things first is to send a `POST` request to `https://auth.acme-dns.io/register` and obtain username, password and the domain. For simplicity just
+
+```bash
+curl -X POST https://auth.acme-dns.io/register
+```
+
+Which would return something like
+
+```json
+{
+  "username": "00000000-0000-0000-0000-000000000000",
+  "password": "your-random-password-string",
+  "fulldomain": "11111111-1111-1111-1111-111111111111.auth.acme-dns.io",
+  "subdomain": "11111111-1111-1111-1111-111111111111"
+}
+```
+
+Next I needed to point my public domain to use this, which required changing things in Hostinger. I had to add a `CNAME` record for name `_acme-challenge.local` and point it to the full domain obtained from the registered acme.
+
+To allow Traefik to use this, a `acme-dns-creds.json` file was created in `./traefik` which is mapped to `/etc/traefik/` in the container. To configure Traefik, the `docker-compose.yml` was modified as such
+
+```yaml
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    volumes:
+      - ./traefik/acme.json:/acme.json
+      - ./traefik/acme-dns-creds.json:/acme-dns-creds.json
+    environment:
+      - ACME_DNS_API_BASE=https://auth.acme-dns.io
+      - ACME_DNS_STORAGE_PATH=/acme-dns-creds.json
+    command:
+      - "--certificatesresolvers.acmeDnsResolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.acmeDnsResolver.acme.dnschallenge.provider=acmedns"
+      - "--certificatesresolvers.acmeDnsResolver.acme.storage=/acme.json"
+```
+
+And the container was restarted after creating the required files
+
+```bash
+cd ~/projects/infra
+sudo touch traefik/acme.json
+sudo chmod 600 traefik/acme.json
+sudo docker compose up -d
+```
+
+## Initial misconfiguration
+
+Although on paper this seemed like a perfect deployment, but soon enough I got hit with this
+
+```txt
+traefik-1  | [ERROR] acme: Error building DNS-01 challenge: acme-dns: request failed with status 400: REFUSED
+```
+
+The error suggested that something was wrong with my supplied credentials. Hence, a complete new set of credentials was again obtained (using the previously mentioned procedure) along with the DNS change and updating the file with the new format.
+
+```json
+{
+  "local.surjyadipsen.in": {
+    "username": "<NEW_ACME_DNS_USERNAME_UUID>",
+    "password": "<NEW_ACME_DNS_PASSWORD_STRING>",
+    "fulldomain": "<NEW_DYNAMIC_SUBDOMAIN>.auth.acme-dns.io",
+    "subdomain": "<NEW_DYNAMIC_SUBDOMAIN>"
+  }
+}
+```
+
+Since the full domain was changed which needed a DNS propagation, I waited around 5 mins and checked online DNS propagation sites to verify that the change was propagated.
+
+## DNS Propagation?
+
+After confirming that the change was live, I restarted the container with hope. Although it should work smoothly, I got the following error message.
+
+```txt
+traefik-1  | 2026-07-03T07:54:49Z DBG > [INFO] [*.local.surjyadipsen.in] acme: Waiting for DNS record propagation. lib=lego
+traefik-1  | 2026-07-03T07:55:29Z DBG > [INFO] [*.local.surjyadipsen.in] acme: Waiting for DNS record propagation. lib=lego
+[FATAL] Timeout reached after 1m0s. Certificate request dropped.
+```
+
+The runtime environment waited for 60 seconds before canceling the request. After checking the logs, I noticed that it was still pointing to the old domain instead of the new one.
+
+Now comes the frustrating part, deleting `acme.json` recreating the docker container, almost everything was tried. After which the error message was
+
+```txt
+traefik-1  | 2026-07-03T08:16:23Z DBG > [INFO] [*.local.surjyadipsen.in] acme: Preparing to solve DNS-01 lib=lego
+traefik-1  | 2026-07-03T08:16:23Z DBG > [INFO] Found CNAME entry for "_acme-challenge.local.surjyadipsen.in.": "<OLD_DYNAMIC_SUBDOMAIN>.auth.acme-dns.io."
+traefik-1  | 2026-07-03T08:16:24Z DBG > [INFO] Checking DNS record propagation. [nameservers=127.0.0.11:53] lib=lego
+```
+
+It was still stale data. Now became the DNS Debugging part
+
+## DNS Debugging
+
+The online tools mentioned that the DNS propagation was perfect. But running `dig`:
+
+```bash
+dig _acme-challenge.local.surjyadipsen.in CNAME +short
+```
+
+returned old subdomain. Why? Nobody knows, maybe it was stale cache from the DNS?
+
+I ran without `+short` to check what DNS server was being used and the result was
+
+```txt
+;; ANSWER SECTION:
+_acme-challenge.local.surjyadipsen.in. 12674 IN CNAME <OLD_DYNAMIC_SUBDOMAIN>.auth.acme-dns.io.
+
+;; SERVER: 100.100.100.100#53(100.100.100.100) (UDP)
+```
+
+It was a Tailscale DNS server. I tried adding `@1.1.1.1` and even `@8.8.8.8` but the result was same old domain, even when the tools suggested that the propagation already happened. Next comes rebooting of the device for any stale connection, filing a cache revalidation request for both `1.1.1.1` and `8.8.8.8` but nothing worked. At last I ended up disabling the propagation checks entirely with:
+
+```yaml
+- "--certificatesresolvers.acmeDnsResolver.acme.dnschallenge.propagation.disableChecks=true"
+```
+
+Removed `acme.json` and rebooted the container, the local CNAME record still showed the old one, but the validation was successful. Later that day about 6 hrs later when I tested again the new domain was being shown. I don't know what actually caused this issue, maybe it was some caching done by my router or ISP, who knows...
+
+Finally the configuration was looking like this
+
+{% mermaid
+   code="graph TD\n\n%% Node Styling Profiles\nclassDef client fill:#1a1a1a,stroke:#333,stroke-width:2px,color:#fff,font-family:monospace;\nclassDef proxy fill:#2b2b2b,stroke:#00ffcc,stroke-width:2px,color:#fff,font-family:monospace;\nclassDef public fill:#1a233a,stroke:#3b82f6,stroke-width:2px,color:#fff,font-family:monospace;\nclassDef internal fill:#2c1a30,stroke:#d946ef,stroke-width:2px,color:#fff,font-family:monospace;\n\nsubgraph Local_Network[\"Private Subnet\"]\n    A[\"Local Clients / Laptop\"]:::client\n    B[\"Traefik Proxy<br/>Raspberry Pi Host\"]:::proxy\n\n    subgraph Internal_Routing[\"Docker Applications\"]\n        C[\"dashboard.local.surjyadipsen.in\"]:::internal\n        D[\"booklore.local.surjyadipsen.in\"]:::internal\n        E[\"actual.local.surjyadipsen.in\"]:::internal\n    end\nend\n\nsubgraph Public_Internet[\"Global WAN\"]\n    LE[\"Let's Encrypt Authority\"]:::public\n    HN[\"Hostinger Authoritative NS<br/>_acme-challenge.local\"]:::public\n    AD[\"acme-dns.io Sandbox<br/>Dynamic TXT Records\"]:::public\nend\n\nA -->|HTTPS Traffic| B\n\nB -->|Route :443| C\nB -->|Route :443| D\nB -->|Route :443| E\n\nB -->|\"1. API Token Write<br/>disableChecks=true\"| AD\nLE -->|\"2. Traces Challenge Target\"| HN\nHN -->|\"3. Static CNAME Delegation\"| AD\nLE -->|\"4. Verifies TXT Payload\"| AD\nLE -->|\"5. Issues Wildcard SSL\"| B\n\nclass LE,HN,AD public;" /%}
+
+## Enabling it for Booklore
+
+Now when the certificate is generated and usable, I needed to specify which service to add it to. I decided to keep **Actual Budget** on the Tailscale cert only and use this certificate for **Booklore** and future services. To enable SSL in Booklore I had to make the following changes:
+
+```yaml
+      - "traefik.http.routers.booklore-https.rule=Host(`booklore.local.surjyadipsen.in`)"
+      - "traefik.http.routers.booklore-https.entrypoints=websecure"
+      - "traefik.http.routers.booklore-https.tls=true"
+      - "traefik.http.routers.booklore-https.tls.certresolver=acmeDnsResolver"
+      - "traefik.http.routers.booklore-https.tls.domains[0].main=*.local.surjyadipsen.in"
+      - "traefik.http.routers.booklore-https.service=booklore"
+```
+
+And soon the service was being served alongside HTTP resource allowing PWA installation.
+
+---
+
+Current project details [here](/projects/home-lab)

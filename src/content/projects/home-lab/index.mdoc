@@ -6,7 +6,7 @@ summary: >-
   self-hosted services like Immich, Paperless-ngx, and Actual Budget.
 dateRange:
   start: 2022-03-01
-lastUpdatedDate: 2026-06-07
+lastUpdatedDate: 2026-07-03
 status: deployed
 category: Architecture
 duration: 51 MONTHS
@@ -21,6 +21,8 @@ techStack:
   - Paperless-ngx
   - Actual Budget
   - Reactive Resume
+  - Booklore
+  - acme-dns
   - PostgreSQL
   - Redis
   - Gotenberg
@@ -99,7 +101,7 @@ No backend services (such as databases or cache brokers) expose ports to the hos
 {% accordion %}
 {% accordionItem title="Deployment Architecture Diagram" %}
 {% mermaid
-   code="graph TB\n    subgraph Client[\"Client Devices\"]\n        CL_Local[\"Local Client (Hotspot AP)\"]\n        CL_Remote[\"Remote Client (Tailscale Tailnet)\"]\n    end\n\n    subgraph Host[\"Raspberry Pi 5 Server Node\"]\n        subgraph NetIF[\"Physical/VPN Interfaces\"]\n            TS[\"Tailscale VPN Interface (Tailnet)\"]\n            AP[\"Host AP (Internal Wi-Fi Adapter)\"]\n            WAN[\"WAN Gateway (USB Wi-Fi Dongle)\"]\n        end\n\n    subgraph Ingress[\"Ingress Proxy (Network: infra_default)\"]\n        PROXY[\"Traefik Reverse Proxy\"]\n      end\n\n        subgraph Stacks[\"Docker Compose Isolated Stacks\"]\n            subgraph ImmichStack[\"Immich Stack\"]\n                IMM_WEB[\"Immich Web Ingress\"]\n                IMM_DB[(\"PostgreSQL Database\")]\n                IMM_REDIS[(\"Redis Cache\")]\n                IMM_ML[\"Immich Machine Learning Engine\"]\n            end\n\n            subgraph PaperlessStack[\"Paperless-ngx Stack\"]\n                PP_WEB[\"Paperless Web Ingress\"]\n                PP_DB[(\"PostgreSQL Database\")]\n                PP_REDIS[(\"Redis Message Queue\")]\n                PP_TIKA[\"Apache Tika Text Extractor\"]\n                PP_GOT[\"Gotenberg PDF Renderer\"]\n            end\n\n            subgraph ActualBudget[\"Actual Budget Stack\"]\n                AB_WEB[\"Actual Budget Ingress Server\"]\n            end\n\n            subgraph ResumeStack[\"Reactive Resume Stack\"]\n                RR_WEB[\"Reactive Resume Ingress\"]\n                RR_DB[(\"PostgreSQL Database\")]\n                RR_PDF[\"PDF Renderer Engine\"]\n            end\n        end\n    end\n\n    %% Client Connections\n    CL_Local -->|Direct Routing| AP\n    CL_Remote -->|Encrypted Tunnel| TS\n    AP --> PROXY\n    TS --> PROXY\n\n    %% Ingress to Web Frontends\n    PROXY -->|HTTP/HTTPS Routing| IMM_WEB\n    PROXY -->|HTTP/HTTPS Routing| PP_WEB\n    PROXY -->|HTTP/HTTPS Routing| AB_WEB\n    PROXY -->|HTTP/HTTPS Routing| RR_WEB\n\n    %% Private Stack Networks\n    IMM_WEB <--> IMM_DB & IMM_REDIS & IMM_ML\n    PP_WEB <--> PP_DB & PP_REDIS & PP_TIKA & PP_GOT\n    RR_WEB <--> RR_DB & RR_PDF" /%}
+   code="graph TB\n    subgraph Client[\"Client Devices\"]\n        CL_Local[\"Local Client (Hotspot AP)\"]\n        CL_Remote[\"Remote Client (Tailscale Tailnet)\"]\n    end\n\n    subgraph Host[\"Raspberry Pi 5 Server Node\"]\n        subgraph NetIF[\"Physical/VPN Interfaces\"]\n            TS[\"Tailscale VPN Interface (Tailnet)\"]\n            AP[\"Host AP (Internal Wi-Fi Adapter)\"]\n            WAN[\"WAN Gateway (USB Wi-Fi Dongle)\"]\n        end\n\n    subgraph Ingress[\"Ingress Proxy (Network: infra_default)\"]\n        PROXY[\"Traefik Reverse Proxy\"]\n      end\n\n        subgraph Stacks[\"Docker Compose Isolated Stacks\"]\n            subgraph ImmichStack[\"Immich Stack\"]\n                IMM_WEB[\"Immich Web Ingress\"]\n                IMM_DB[(\"PostgreSQL Database\")]\n                IMM_REDIS[(\"Redis Cache\")]\n                IMM_ML[\"Immich Machine Learning Engine\"]\n            end\n\n            subgraph PaperlessStack[\"Paperless-ngx Stack\"]\n                PP_WEB[\"Paperless Web Ingress\"]\n                PP_DB[(\"PostgreSQL Database\")]\n                PP_REDIS[(\"Redis Message Queue\")]\n                PP_TIKA[\"Apache Tika Text Extractor\"]\n                PP_GOT[\"Gotenberg PDF Renderer\"]\n            end\n\n            subgraph ActualBudget[\"Actual Budget Stack\"]\n                AB_WEB[\"Actual Budget Ingress Server\"]\n            end\n\n            subgraph ResumeStack[\"Reactive Resume Stack\"]\n                RR_WEB[\"Reactive Resume Ingress\"]\n                RR_DB[(\"PostgreSQL Database\")]\n                RR_PDF[\"PDF Renderer Engine\"]\n            end\n\n            subgraph BookloreStack[\"Booklore Stack\"]\n                BL_WEB[\"Booklore Ingress Server\"]\n            end\n        end\n    end\n\n    subgraph External[\"External Services / Public Internet\"]\n        LE[\"Let's Encrypt Authority\"]\n        AD[\"acme-dns.io Sandbox\"]\n    end\n\n    %% Client Connections\n    CL_Local -->|Direct Routing| AP\n    CL_Remote -->|Encrypted Tunnel| TS\n    AP --> PROXY\n    TS --> PROXY\n\n    %% Ingress to Web Frontends\n    PROXY -->|HTTP/HTTPS Routing| IMM_WEB\n    PROXY -->|HTTP/HTTPS Routing| PP_WEB\n    PROXY -->|HTTP/HTTPS Routing| AB_WEB\n    PROXY -->|HTTP/HTTPS Routing| RR_WEB\n    PROXY -->|HTTP/HTTPS Routing| BL_WEB\n\n    %% Private Stack Networks\n    IMM_WEB <--> IMM_DB & IMM_REDIS & IMM_ML\n    PP_WEB <--> PP_DB & PP_REDIS & PP_TIKA & PP_GOT\n    RR_WEB <--> RR_DB & RR_PDF\n\n    %% ACME DNS-01 Verification Flow\n    PROXY <-->|Outbound API / Inbound SSL| WAN\n    WAN <-->|1. Register / Write TXT| AD\n    LE -->|2. Verify DNS Challenge| AD\n    LE -->|3. Issue Wildcard Cert| WAN" /%}
 {% /accordionItem %}
 {% /accordion %}
 
@@ -110,6 +112,7 @@ No backend services (such as databases or cache brokers) expose ports to the hos
 - **Immich**: AI-powered photo and video backup workspace. Features metadata parsing, geocoding/location maps, and facial clustering models running on local CPU resources.
 - **Paperless-ngx**: Local document management vault utilizing Tesseract OCR to convert images and scans into searchable PDFs. Supported by **Apache Tika** for processing docx/xlsx, and **Gotenberg** for standard office document rendering.
 - **Actual Budget**: Local-first finance tracking dashboard utilizing envelope-based budgeting. Runs offline as a PWA, syncing changes seamlessly when connected.
+- **Booklore**: Self-hosted E-Book catalog database and management library. Revived with secure HTTPS wildcard certificate routing to support installation as a mobile PWA.
 - **Reactive Resume**: Customizable resume editor equipped with Model Context Protocol (MCP) integrations for on-the-fly AI resume optimization.
 - **Zerobyte**: Server backup daemon that runs automated crons to package compose configurations, persistent volumes, and databases, pushing encrypted archives to S3-compatible endpoints.
 
@@ -152,10 +155,6 @@ Legacy services were decommissioned to reduce CPU overhead, conserve RAM, and st
 - Audio-book streaming library
 - Decommissioned due to low user utilization.
 ---
-- **Booklore**
-- E-book catalog database
-- Decommissioned due to low user utilization.
----
 - **Solidtime**
 - Time-tracking engine
 - Decommissioned due to low user utilization.
@@ -167,12 +166,14 @@ Legacy services were decommissioned to reduce CPU overhead, conserve RAM, and st
 
 Security is enforced by blocking all inbound WAN traffic. Tailscale acts as a Virtual LAN gateway, assigning a secure tailnet IP address to the node.
 
-Traefik queries Tailscale API to retrieve valid SSL certificates automatically. This enables end-to-end TLS encryption under the personal tailnet domain name.
+Traefik handles TLS routing using a dual approach:
+1. **Tailscale SSL Certs**: Retrieves certificates from the Tailscale API for single-device tailnet domains (e.g., Actual Budget).
+2. **acme-dns Wildcard Certs**: Solves DNS-01 challenges via **acme-dns.io** to provision a wildcard certificate (`*.local.surjyadipsen.in`), bypassing domain-wide HSTS policies for self-hosted apps (e.g., Booklore).
 
 {% accordion %}
 {% accordionItem title="Routing Logic Diagram" %}
 {% mermaid
-   code="flowchart TD\n    Request([Client Request]) --> NetCheck{Client Location?}\n    NetCheck -->|Local LAN| HotspotAP[Connect to Pi 5 Hotspot AP]\n    NetCheck -->|Outside LAN| Tailnet[Establish encrypted Tailnet tunnel]\n\n    HotspotAP --> RouteLocal[Direct access via AP Wi-Fi]\n    Tailnet --> RouteTS[VPN interface tunnel]\n\n    RouteLocal --> Traefik[Traefik Ingress Router]\n    RouteTS --> Traefik\n\n    Traefik --> DynamicRouting{Traefik Label Matching}\n    DynamicRouting -->|actual.domain| AB[Actual Budget Stack]\n    DynamicRouting -->|immich.domain| IM[Immich Stack]\n    DynamicRouting -->|paperless.domain| PL[Paperless-ngx Stack]\n    DynamicRouting -->|resume.domain| RR[Reactive Resume Stack]" /%}
+   code="flowchart TD\n    Request([Client Request]) --> NetCheck{Client Location?}\n    NetCheck -->|Local LAN| HotspotAP[Connect to Pi 5 Hotspot AP]\n    NetCheck -->|Outside LAN| Tailnet[Establish encrypted Tailnet tunnel]\n\n    HotspotAP --> RouteLocal[Direct access via AP Wi-Fi]\n    Tailnet --> RouteTS[VPN interface tunnel]\n\n    RouteLocal --> Traefik[Traefik Ingress Router]\n    RouteTS --> Traefik\n\n    Traefik --> DynamicRouting{Traefik Label Matching}\n    DynamicRouting -->|actual.domain| AB[Actual Budget Stack]\n    DynamicRouting -->|immich.domain| IM[Immich Stack]\n    DynamicRouting -->|paperless.domain| PL[Paperless-ngx Stack]\n    DynamicRouting -->|resume.domain| RR[Reactive Resume Stack]\n    DynamicRouting -->|booklore.domain| BL[Booklore Stack]" /%}
 {% /accordionItem %}
 {% /accordion %}
 
@@ -185,3 +186,4 @@ This project's design, setup, and networking upgrades are documented in detail a
 - [**Initial Setup (Part 1)**](/posts/my-slice-of-pi-homelab-setup): Setting up the Raspberry Pi 5, containerizing early services (Pi-hole, Gitea, Minecraft, NPM), and early custom DNS lessons.
 - [**Setup Upgrade (Part 2)**](/posts/baking-the-pi-lab-homelab-setup-pt2): Migrating from Portainer to Docker Compose, service auditing, and Traefik network isolation.
 - [**Networking Upgrade (Part 3)**](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3): Modernizing network topology, zero-open-ports ingress using Tailscale, and dual-interface failover.
+- [**Subdomain HSTS & Wildcard SSL (Follow-up)**](/posts/how-i-solved-subdomain-hsts-issues-in-my-homelab-using-traefik-and-acme-dns): Resolving subdomain HSTS conflicts by implementing ACME DNS-01 wildcard certificates using Traefik and `acme-dns.io`.
