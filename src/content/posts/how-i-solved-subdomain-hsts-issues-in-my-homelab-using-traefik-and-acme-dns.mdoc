@@ -12,6 +12,8 @@ tags:
   - dns
   - acme-dns
 ---
+*This post is a follow-up/addendum to the three-part **[Homelab Setup](/projects/home-lab)** series.*
+
 Previously only one service in my homelab was served using HTTPS. For other service I didn't really need HTTPS. Since everything was flowing through Tailscale, most of the risks were mitigated. I only required HTTPS only for **Actual Budget**, as the most convenient way to get offline usage in a mobile device is to install it as PWA (which requires HTTPS and this requirement can't be bypassed easily).
 
 ---
@@ -20,7 +22,7 @@ Previously only one service in my homelab was served using HTTPS. For other serv
 
 ## Only one HTTPS service
 
-Currently **Actual Budget** was served from the device URL (i.e., `xotembotz-rpi.taild3ff0d.ts.net`) instead of the standard `appname.local.surjyadipsen.in`. This allowed an HTTPS cert being issued using Tailscale. The whole setup was like this
+Currently **Actual Budget** was served from the device URL (i.e., `xotembotz-rpi.taild3ff0d.ts.net`) instead of the standard `appname.local.surjyadipsen.in`. This allowed an HTTPS cert being issued using Tailscale (as detailed in the [Networking Upgrade (Part 3)](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3) post). The whole setup was like this
 
 ```yaml
 #actual-budget/docker-compose.yaml
@@ -56,7 +58,7 @@ This site (`surjyadipsen.in`) is hosted in Vercel, which automatically applies H
 
 # What changed?
 
-Recently I rebooted a previously deprecated service **Booklore**, for effective reading experience in mobile devices, I wanted to install it as a PWA. But the present configuration was not suitable for this.
+Recently I rebooted a previously deprecated service **Booklore** (which was retired in [Part 2](/posts/baking-the-pi-lab-homelab-setup-pt2) of the series), for effective reading experience in mobile devices. I wanted to install it as a PWA, but the present configuration was not suitable for this.
 
 Since I purchased the domain on Hostinger which doesn't have an API to manage the records, standard Let's Encrypt certs were not possible.
 
@@ -239,3 +241,7 @@ Now when the certificate is generated and usable, I needed to specify which serv
 ```
 
 And soon the service was being served alongside HTTP resource allowing PWA installation.
+
+---
+
+Current project details [here](/projects/home-lab)
