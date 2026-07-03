@@ -1,13 +1,187 @@
 ---
 name: Home-Lab
-summary: just a lab
+summary: >-
+  A secure, production-grade Raspberry Pi 5 homelab featuring isolated Docker
+  network topology, Tailscale VPN remote access, Traefik reverse proxy, and
+  self-hosted services like Immich, Paperless-ngx, and Actual Budget.
 dateRange:
   start: 2022-03-01
+lastUpdatedDate: 2026-06-07
 status: deployed
 category: Architecture
-duration: asd
+duration: 51 MONTHS
+stakeholders: Personal
 techStack:
-  - asd
+  - Raspberry Pi 5
+  - Docker
+  - Docker Compose
+  - Traefik
+  - Tailscale
+  - Immich
+  - Paperless-ngx
+  - Actual Budget
+  - Reactive Resume
+  - PostgreSQL
+  - Redis
+  - Gotenberg
+  - Apache Tika
 images:
   - /images/projects/home-lab/images/0.png
 ---
+## 1. EXECUTIVE SUMMARY
+
+The **Home-Lab** project is a self-sustained personal infrastructure node built on a Raspberry Pi 5 (8GB RAM). Over a 50+ month execution cycle, the lab evolved from a naive, port-exposed single-board computer into an enterprise-grade local network. By migrating away from graphical managers like Portainer and Nginx Proxy Manager, the system now implements native **Docker Compose** orchestration via secure SSH, strict network isolation via custom bridge configurations, and zero-open-port ingress via **Tailscale VPN** and **Traefik**.
+
+Today, the node serves as a high-availability personal cloud, hosting critical services such as Immich (photo library), Paperless-ngx (OCR document vault), and Actual Budget (envelope ledger) with end-to-end SSL encryption.
+
+---
+
+## 2. EVOLUTION & MILESTONES
+
+The networking and application topologies were refined over three distinct execution phases to optimize performance, eliminate wear-and-tear bottlenecks, and establish a security-first posture.
+
+{% table %}
+- PHASE
+- TOPOLOGY & MANAGEMENT
+- DATA INTEGRITY & IO
+---
+- **Phase 1: Naive**
+- Exposed ports, Portainer GUI, Router CNAMEs, Pi-hole local DNS.
+- Boot SD Card (High wear-and-tear, severe write latency).
+---
+- **Phase 2: Transition**
+- Native Docker Compose, CLI via SSH, common network `infra_default`.
+- External Attached Storage (High-speed read/write, retired SD boot).
+---
+- **Phase 3: Modern**
+- Tailscale tailnet integration, Traefik reverse proxy, zero exposed ports.
+- Automated S3 backups via Zerobyte, multi-tier stack isolation.
+{% /table %}
+
+---
+
+## 3. HARDWARE SPECIFICATIONS
+
+{% table %}
+- COMPONENT
+- SPECIFICATION
+- DESIGN PURPOSE
+---
+- **Compute Host**
+- Raspberry Pi 5 (8GB LPDDR4X)
+- Low-power, high-compute host for persistent containers.
+---
+- **Cooling**
+- Official Raspberry Pi Active Cooler
+- Sustains thermal loads during heavy multi-core compilation/OCR tasks.
+---
+- **Storage Subsystem**
+- M.2 NVMe SSD via PCIe HAT interface
+- Eliminates SD card strain; provides robust database write speeds.
+---
+- **WAN Interface**
+- TP-Link USB Wi-Fi Dongle
+- Handles internet-facing outbound traffic.
+---
+- **LAN AP Interface**
+- Built-in Wi-Fi Interface (Access Point Mode)
+- Low-latency direct access for home devices when on-premise.
+{% /table %}
+
+---
+
+## 4. DOCKER ORCHESTRATION & ISOLATION
+
+To prevent port conflicts and limit exposure, every application stack runs on a dedicated private network. Communication between web-facing containers and the ingress router is routed through a shared bridge network (`infra_default`).
+
+No backend services (such as databases or cache brokers) expose ports to the host interface.
+
+{% accordion %}
+{% accordionItem title="Deployment Architecture Diagram" %}
+{% mermaid
+   code="graph TB\n    subgraph Client[\"Client Devices\"]\n        CL_Local[\"Local Client (Hotspot AP)\"]\n        CL_Remote[\"Remote Client (Tailscale Tailnet)\"]\n    end\n\n    subgraph Host[\"Raspberry Pi 5 Server Node\"]\n        subgraph NetIF[\"Physical/VPN Interfaces\"]\n            TS[\"Tailscale VPN Interface (Tailnet)\"]\n            AP[\"Host AP (Internal Wi-Fi Adapter)\"]\n            WAN[\"WAN Gateway (USB Wi-Fi Dongle)\"]\n        end\n\n    subgraph Ingress[\"Ingress Proxy (Network: infra_default)\"]\n        PROXY[\"Traefik Reverse Proxy\"]\n      end\n\n        subgraph Stacks[\"Docker Compose Isolated Stacks\"]\n            subgraph ImmichStack[\"Immich Stack\"]\n                IMM_WEB[\"Immich Web Ingress\"]\n                IMM_DB[(\"PostgreSQL Database\")]\n                IMM_REDIS[(\"Redis Cache\")]\n                IMM_ML[\"Immich Machine Learning Engine\"]\n            end\n\n            subgraph PaperlessStack[\"Paperless-ngx Stack\"]\n                PP_WEB[\"Paperless Web Ingress\"]\n                PP_DB[(\"PostgreSQL Database\")]\n                PP_REDIS[(\"Redis Message Queue\")]\n                PP_TIKA[\"Apache Tika Text Extractor\"]\n                PP_GOT[\"Gotenberg PDF Renderer\"]\n            end\n\n            subgraph ActualBudget[\"Actual Budget Stack\"]\n                AB_WEB[\"Actual Budget Ingress Server\"]\n            end\n\n            subgraph ResumeStack[\"Reactive Resume Stack\"]\n                RR_WEB[\"Reactive Resume Ingress\"]\n                RR_DB[(\"PostgreSQL Database\")]\n                RR_PDF[\"PDF Renderer Engine\"]\n            end\n        end\n    end\n\n    %% Client Connections\n    CL_Local -->|Direct Routing| AP\n    CL_Remote -->|Encrypted Tunnel| TS\n    AP --> PROXY\n    TS --> PROXY\n\n    %% Ingress to Web Frontends\n    PROXY -->|HTTP/HTTPS Routing| IMM_WEB\n    PROXY -->|HTTP/HTTPS Routing| PP_WEB\n    PROXY -->|HTTP/HTTPS Routing| AB_WEB\n    PROXY -->|HTTP/HTTPS Routing| RR_WEB\n\n    %% Private Stack Networks\n    IMM_WEB <--> IMM_DB & IMM_REDIS & IMM_ML\n    PP_WEB <--> PP_DB & PP_REDIS & PP_TIKA & PP_GOT\n    RR_WEB <--> RR_DB & RR_PDF" /%}
+{% /accordionItem %}
+{% /accordion %}
+
+---
+
+## 5. ACTIVE SERVICES PORTFOLIO
+
+- **Immich**: AI-powered photo and video backup workspace. Features metadata parsing, geocoding/location maps, and facial clustering models running on local CPU resources.
+- **Paperless-ngx**: Local document management vault utilizing Tesseract OCR to convert images and scans into searchable PDFs. Supported by **Apache Tika** for processing docx/xlsx, and **Gotenberg** for standard office document rendering.
+- **Actual Budget**: Local-first finance tracking dashboard utilizing envelope-based budgeting. Runs offline as a PWA, syncing changes seamlessly when connected.
+- **Reactive Resume**: Customizable resume editor equipped with Model Context Protocol (MCP) integrations for on-the-fly AI resume optimization.
+- **Zerobyte**: Server backup daemon that runs automated crons to package compose configurations, persistent volumes, and databases, pushing encrypted archives to S3-compatible endpoints.
+
+---
+
+## 6. RETIRED SERVICES LOG
+
+Legacy services were decommissioned to reduce CPU overhead, conserve RAM, and streamline routing:
+
+{% table %}
+- SERVICE
+- PRIMARY ROLE (HISTORICAL)
+- REASON FOR DECOMMISSIONING
+---
+- **Pi-hole**
+- Local DNS resolver & Adblocker
+- Retired in favor of public NextDNS to lower configuration upkeep.
+---
+- **Nginx Proxy Manager**
+- GUI-based Nginx Reverse Proxy
+- Replaced by Traefik's label-based autodiscovery syntax.
+---
+- **Uptime Kuma**
+- Uptime & SLA Monitor
+- Host self-monitoring is redundant; when the node fails, the monitor fails.
+---
+- **Gitea**
+- Lightweight self-hosted Git server
+- Retired; project code consolidated and pushed to public GitHub.
+---
+- **Minecraft Server**
+- Game server instance
+- Decommissioned due to idle player traffic and high RAM footprint.
+---
+- **Anytype Server**
+- P2P sync backup server
+- Decommissioned; default cloud sync tiers met personal usage limits.
+---
+- **Audiobookshelf**
+- Audio-book streaming library
+- Decommissioned due to low user utilization.
+---
+- **Booklore**
+- E-book catalog database
+- Decommissioned due to low user utilization.
+---
+- **Solidtime**
+- Time-tracking engine
+- Decommissioned due to low user utilization.
+{% /table %}
+
+---
+
+## 7. NETWORKING & VPN ROUTING
+
+Security is enforced by blocking all inbound WAN traffic. Tailscale acts as a Virtual LAN gateway, assigning a secure tailnet IP address to the node.
+
+Traefik queries Tailscale API to retrieve valid SSL certificates automatically. This enables end-to-end TLS encryption under the personal tailnet domain name.
+
+{% accordion %}
+{% accordionItem title="Routing Logic Diagram" %}
+{% mermaid
+   code="flowchart TD\n    Request([Client Request]) --> NetCheck{Client Location?}\n    NetCheck -->|Local LAN| HotspotAP[Connect to Pi 5 Hotspot AP]\n    NetCheck -->|Outside LAN| Tailnet[Establish encrypted Tailnet tunnel]\n\n    HotspotAP --> RouteLocal[Direct access via AP Wi-Fi]\n    Tailnet --> RouteTS[VPN interface tunnel]\n\n    RouteLocal --> Traefik[Traefik Ingress Router]\n    RouteTS --> Traefik\n\n    Traefik --> DynamicRouting{Traefik Label Matching}\n    DynamicRouting -->|actual.domain| AB[Actual Budget Stack]\n    DynamicRouting -->|immich.domain| IM[Immich Stack]\n    DynamicRouting -->|paperless.domain| PL[Paperless-ngx Stack]\n    DynamicRouting -->|resume.domain| RR[Reactive Resume Stack]" /%}
+{% /accordionItem %}
+{% /accordion %}
+
+---
+
+## 8. ASSOCIATED FIELD LOGS & POSTS
+
+This project's design, setup, and networking upgrades are documented in detail across a three-part article series:
+
+- [**Initial Setup (Part 1)**](/posts/my-slice-of-pi-homelab-setup): Setting up the Raspberry Pi 5, containerizing early services (Pi-hole, Gitea, Minecraft, NPM), and early custom DNS lessons.
+- [**Setup Upgrade (Part 2)**](/posts/baking-the-pi-lab-homelab-setup-pt2): Migrating from Portainer to Docker Compose, service auditing, and Traefik network isolation.
+- [**Networking Upgrade (Part 3)**](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3): Modernizing network topology, zero-open-ports ingress using Tailscale, and dual-interface failover.

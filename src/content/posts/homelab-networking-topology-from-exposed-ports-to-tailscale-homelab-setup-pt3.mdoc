@@ -66,3 +66,6 @@ Tailscale took up the burden of connecting different devices and forming a Virtu
    code="architecture-beta\n    group wan(internet)[\"Public Internet (WAN)\"]\n    group lan(cloud)[\"Local Network (LAN)\"]\n    group server_node(server)[\"infra_default\"] in lan\n\n    %% WAN Component\n    service ext_traffic(internet)[\"External Traffic\"] in wan\n\n    %% LAN Components\n    service tailscale(disk)[\"Tailscale\"] in server_node\n    service router(internet)[\"Hotspot\"] in lan\n    service laptop(server)[\"Client Laptop\"] in lan\n    \n    %% Reverse Proxy and Apps inside the server\n    service proxy(server)[\"Reverse Proxy\"] in server_node\n    service app1(disk)[\"Application 1\"] in server_node\n    service app2(disk)[\"Application 2\"] in server_node\n\n    %% WAN Traffic hits the firewall and stops\n    ext_traffic:R --> L:tailscale\n    \n    %% LAN Traffic flow through Router -> Reverse Proxy -> Apps\n    laptop:R <--> L:router\n    router:R <--> L:proxy\n    proxy:L <--> L:tailscale\n    \n    %% Proxy handles internal routing to the specific application ports\n    proxy:T <--> B:app1\n    proxy:B <--> T:app2" /%}
 {% /accordionItem %}
 {% /accordion %}
+
+Current project details [here](/projects/home-lab)
+
