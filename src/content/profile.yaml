@@ -1,8 +1,7 @@
 siteName: Surjyadip Sen | Field Notes
 description: >-
-  Helping individuals and organizations increase efficiency by automating
-  repetitive tasks. Full Stack Developer specializing in scalable real-time data
-  analytics and AI-driven automation.
+  From embedded systems to atmospheric AI: Building high-efficiency solutions
+  for complex domains
 ogImage: /images/settings/ogImage.png
 socialLinks:
   - platform: GitHub
@@ -13,22 +12,18 @@ socialLinks:
     url: mailto:surjyadip100.sen@gmail.com
 copyright: © 2026 Surjyadip Sen. All Rights Reserved.
 name: Surjyadip Sen
-role: Full Stack Developer
+role: Software Architect and ML Engineer
 email: surjyadip100.sen@gmail.com
 location: Chennai, India
 picture: /images/details/picture.png
 resume: /assets/resume.pdf
 bio: >-
-  Full Stack Developer specializing in scalable real-time data analytics and
-  AI-driven automation. Proficient in Next.js,
-
-  React Native, Python, and C++, with a proven track record in building
-  high-performance systems for crypto data
-
-  aggregation and embedded IoT devices. Experienced in managing production-grade
-  environments using Docker, Jenkins, and
-
-  PostgreSQL.
+  Full Stack Developer & Atmospheric Data Scientist specializing in distributed
+  deep learning, weather forecasting modeling, and scalable real-time data
+  analytics. Proficient in Python, JAX, Flax NNX, PyTorch, C++, and Next.js,
+  with experience in training and fine-tuning state-of-the-art weather models
+  (Pangu, Graphcast, Gencast) on HPC/distributed systems, and designing
+  high-performance IoT and web architectures.
 skills:
   - category: Languages
     items:
@@ -64,7 +59,7 @@ education:
       start: 2025-01-01
       end: 2029-12-31
     location: Chennai, India
-    grade: "9.59"
+    grade: "9.55"
   - institution: Kendriya Vidyalaya Barrackpore (Afs)
     degree: Higher Secondary, Science (CS)
     dateRange:

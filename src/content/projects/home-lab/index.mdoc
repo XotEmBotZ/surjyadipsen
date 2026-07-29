@@ -6,7 +6,7 @@ summary: >-
   self-hosted services like Immich, Paperless-ngx, and Actual Budget.
 dateRange:
   start: 2022-03-01
-lastUpdatedDate: 2026-07-03
+lastUpdatedDate: 2026-07-29
 status: deployed
 category: Architecture
 duration: 51 MONTHS
@@ -17,6 +17,9 @@ techStack:
   - Docker Compose
   - Traefik
   - Tailscale
+  - nftables
+  - NetworkManager Dispatcher
+  - DKMS / RTL8822BU Driver
   - Immich
   - Paperless-ngx
   - Actual Budget
@@ -82,12 +85,12 @@ The networking and application topologies were refined over three distinct execu
 - Eliminates SD card strain; provides robust database write speeds.
 ---
 - **WAN Interface**
-- TP-Link USB Wi-Fi Dongle
-- Handles internet-facing outbound traffic.
+- TP-Link Archer T3U Plus USB Dongle (RTL8822BU)
+- Handles internet-facing outbound traffic using compiled out-of-tree `88x2bu` DKMS driver.
 ---
 - **LAN AP Interface**
-- Built-in Wi-Fi Interface (Access Point Mode)
-- Low-latency direct access for home devices when on-premise.
+- Built-in Wi-Fi Interface (Access Point Mode on 5 GHz Ch 157)
+- Low-latency direct access for home devices, optimized to bypass 2.4 GHz channel interference.
 {% /table %}
 
 ---
@@ -170,6 +173,8 @@ Traefik handles TLS routing using a dual approach:
 1. **Tailscale SSL Certs**: Retrieves certificates from the Tailscale API for single-device tailnet domains (e.g., Actual Budget).
 2. **acme-dns Wildcard Certs**: Solves DNS-01 challenges via **acme-dns.io** to provision a wildcard certificate (`*.local.surjyadipsen.in`), bypassing domain-wide HSTS policies for self-hosted apps (e.g., Booklore).
 
+Hotspot routing between the WAN (`wlan0`) and LAN (`wlan1`) interfaces is managed dynamically via custom NetworkManager dispatcher scripts (`/etc/NetworkManager/dispatcher.d/99-hotspot-rules`) applying `nftables` NAT masquerade and forwarding rules.
+
 {% accordion %}
 {% accordionItem title="Routing Logic Diagram" %}
 {% mermaid
@@ -187,3 +192,4 @@ This project's design, setup, and networking upgrades are documented in detail a
 - [**Setup Upgrade (Part 2)**](/posts/baking-the-pi-lab-homelab-setup-pt2): Migrating from Portainer to Docker Compose, service auditing, and Traefik network isolation.
 - [**Networking Upgrade (Part 3)**](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3): Modernizing network topology, zero-open-ports ingress using Tailscale, and dual-interface failover.
 - [**Subdomain HSTS & Wildcard SSL (Follow-up)**](/posts/how-i-solved-subdomain-hsts-issues-in-my-homelab-using-traefik-and-acme-dns): Resolving subdomain HSTS conflicts by implementing ACME DNS-01 wildcard certificates using Traefik and `acme-dns.io`.
+- [**Wi-Fi Router & Driver Debugging**](/posts/debugging-raspberry-pi-wifi-rtl8822bu-drivers-and-channel-congestion): Troubleshooting out-of-tree RTL8822BU drivers, NetworkManager nftables dispatcher rules, and 5 GHz RF channel congestion on the Raspberry Pi router.
