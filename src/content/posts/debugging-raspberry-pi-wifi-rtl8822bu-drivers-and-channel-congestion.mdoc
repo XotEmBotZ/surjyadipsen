@@ -1,0 +1,353 @@
+---
+title: >-
+  Debugging Raspberry Pi Wi-Fi: From RTL8822BU Kernel Drivers to Channel
+  Congestion
+publishedDate: 2026-07-29
+summary: >-
+  A deep-dive investigation into turning a Raspberry Pi into a dual-interface
+  Wi-Fi router—compiling out-of-tree DKMS drivers for the RTL8822BU chipset,
+  writing custom nftables dispatcher rules, and solving 5 GHz wireless channel
+  congestion.
+category: log
+tags:
+  - raspberrypi
+  - networking
+  - linux
+  - wifi
+  - homelab
+  - nftables
+image: >-
+  /images/posts/debugging-raspberry-pi-wifi-rtl8822bu-drivers-and-channel-congestion/image.png
+---
+## 1. Initial Architecture & Background
+
+Before making the changes, the configuration worked (and that's why it stayed that way for almost a year). I had purchased a **TP-Link USB Wi-Fi Dongle** allowing me to use my **Raspberry Pi** as a router (as part of my ongoing [Home-Lab project](/projects/home-lab) and detailed in [Networking Upgrade (Part 3)](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3)). The internet-facing interface was through the TP-Link Dongle (described as `wlan1` in the Linux interface name) and the user-facing hotspot was created using the RPi's built-in Wi-Fi (referred through its interface name i.e., `wlan0`).
+
+The setup worked perfectly as it mostly satisfied my requirements over time, which were:
+
+1. Acted as a personal router, splitting my single Wi-Fi client connection to multiple devices
+1. Provided signal to my laptop and phone
+1. Kept networking majorly low-maintenance
+
+Although the received hotspot signal was very weak, most of the time my phone would be unable to connect to it unless it was placed right beside the RPi. This was frustrating at first, but the availability of decent-enough mobile data made that problem a "less important" one. Also, swapping the two interfaces didn't make much difference, as the RPi would then struggle to connect to the WAN. The primary suspect of this massive under-performance was **interference between the two interfaces**; specifically, I suspected the TP-Link dongle, being higher-power and having an antenna, would easily overpower the PCB antenna of the built-in Wi-Fi, although later this was debunked by testing different configurations while keeping both interfaces on different bands (**2.4 GHz** and **5 GHz**) altogether. The degradation in output power may have resulted from the presence of a large grounded metal sheet (display) in front of the antenna, though it's not fully tested as of now.
+
+After thorough testing and checking surrounding wireless status, which revealed that almost all the channels in 2.4 GHz had around 7–9 access points while only a few channels in the 5 GHz band faced the same, keeping the hotspot on the **5 GHz band** (even after consideration of lower range on top of power) seemed reasonable and did work for a long time.
+
+## 2. The Trigger: Changing Network Demands
+
+With recent changes in place, a few things have changed drastically:
+
+- **Presence of reliable mobile data cannot be observed at all**
+- **An AP is present in my new room**
+
+Due to the absence of moderate (even 1–3Mbps constant) mobile data, I now require my phone to be connected to Wi-Fi for even basic tasks, which mostly don't work unless the phone is extremely close to the homelab. Hence, a change in network configuration was imminent.
+
+## 3. Phase 1: Swapping Interfaces & Missing Beacons
+
+I again decided to give the swapped configuration a try (after almost a year). It started with connecting to the server, swapping `wlan1` with `wlan0` in the two NetworkManager configuration files, and a gentle restart. With the expectation of a simple enough fix, I was hopeful that I would soon connect to it and go back to my daily life. But it didn't happen. **My laptop seemed to be able to connect but my phone wouldn't**. After some checks through the Wi-Fi Analyzer app, it seemed that my phone could technically see the hotspot, but it wouldn't be listed in the phone's Wi-Fi settings (context: it's Android...).
+
+### Initial Debugging
+
+I started with standard `sudo tail -f /var/log/syslog`, but it gave absolutely no information regarding this. Then with `iwconfig wlan1`, I discovered that the mode was mentioned as master, but **no frequency, channel, or ESSID was being mentioned**.
+
+**Primary suspect:** Wrong/mismatched country code or driver issue.
+
+I started with checking and fixing any discrepancies in `/boot/firmware/cmdline.txt` and `/etc/default/crda` and rebooted with hope—still the same. A quick search online revealed that my dongle (i.e., `TP-Link Archer T3U Plus USB dongle`) is **not well supported by the vendor in the Linux kernel**. Even with the correct country code, I was still seeing these errors in `dmesg`:
+
+```txt
+rtw_8822bu 3-2:1.0: error beacon valid
+rtw_8822bu 3-2:1.0: failed to download drv rsvd page
+rtw_8822bu 3-2:1.0: failed to download beacon
+```
+
+This suggested that **my dongle was not broadcasting any beacons**; my laptop seemed to be able to connect due to aggressive probing for cached SSIDs, whereas my Android device didn't and was unable to connect. Thus began the search to find a working driver for the dongle.
+
+After a few chats with AI and online searches, `morrownr/88x2bu-20210702` seemed to be the correct driver. The installation was simple.
+
+## 4. Phase 2: Compiling Out-of-Tree DKMS Drivers
+
+The process started with me installing the required dev packages, compilers, and headers for the driver to be compiled, which was done via:
+
+```bash
+sudo apt update
+sudo apt install git dkms build-essential raspberrypi-kernel-headers
+```
+
+While these packages were being installed/updated for the present kernel version, downloading the source code was executed along with subsequently running the install script:
+
+```bash
+git clone https://github.com/morrownr/88x2bu-20210702.git
+cd 88x2bu-20210702
+# And after packages were done
+sudo ./install-driver.sh
+```
+
+Producing the following output:
+
+```txt
+::: morrownr/88x2bu-20210702 Driver Installer v2024.x
+::: Checking for required tools... git dkms make gcc [OK]
+::: Checking for kernel headers... [OK]
+
+::: Copying driver source to /usr/src/88x2bu-20210702...
+::: Registering with DKMS...
+
+Creating symlink /var/lib/dkms/88x2bu/20210702/source ->
+    /usr/src/88x2bu-20210702
+
+DKMS: add completed.
+
+::: Compiling the driver (this may take a few minutes)...
+Building module:
+cleaning build area...
+make -j4 KERNELRELEASE=6.12.75+rpt-rpi-2712 -C /lib/modules/6.12.75+rpt-rpi-2712/build M=/var/lib/dkms/88x2bu/20210702/build....
+signing module...
+cleanup modules...
+
+DKMS: build completed.
+
+::: Installing the driver module...
+88x2bu.ko:
+Running module version sanity check.
+    - Original module
+    - No original module exists within this kernel
+    - Installation
+    - Installing to /lib/modules/6.12.75+rpt-rpi-2712/updates/dkms/
+
+depmod...
+
+DKMS: install completed.
+
+::: Do you want to blacklist the native driver (rtw88_8822bu) to prevent conflicts? [Y/n] Y
+::: Blacklisting written to /etc/modprobe.d/blacklist-rtw88.conf
+
+::: Driver installation successful!
+::: Please reboot your Raspberry Pi to activate the new driver.
+::: Do you want to reboot now? [y/N] N
+```
+
+The installation went very smoothly. Instead of a restart, I decided to manually load the new driver via:
+
+```bash
+sudo systemctl stop NetworkManager
+sudo modprobe -r rtw_8822bu
+sudo modprobe -r rtw88_core
+sudo modprobe 88x2bu
+sudo systemctl start NetworkManager
+```
+
+The driver was loaded, and the LED on the dongle was working, but I wanted more confirmation on this. To get further verification, I checked a few tools like `lsusb` and `usb-devices`, and finally `ethtool` to check if everything was working correctly. Here are the outputs for these:
+
+```bash
+lsusb
+
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 002 Device 002: ID 174c:235c ASMedia Technology Inc. Ugreen Storage Device
+Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 003 Device 003: ID 2357:0138 TP Link 802.11ac NIC
+Bus 004 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+
+# Entry ID 2357:0138 matches the RTL8822BU chipset
+
+usb-devices | grep -E "Prod:|Driver="
+
+I: If#= 0 Alt= 0 #EPs= 1 Cls=09(hub ) Sub=00 Prot=00 Driver=hub
+I: If#= 0 Alt= 0 #EPs= 1 Cls=09(hub ) Sub=00 Prot=00 Driver=hub
+I: If#= 1 Alt= 1 #EPs= 4 Cls=08(stor.) Sub=06 Prot=62 Driver=uas
+I: If#= 0 Alt= 0 #EPs= 1 Cls=09(hub ) Sub=00 Prot=00 Driver=hub
+I: If#= 0 Alt= 0 #EPs= 5 Cls=ff(vend.) Sub=ff Prot=ff Driver=88x2bu
+I: If#= 0 Alt= 0 #EPs= 1 Cls=09(hub ) Sub=00 Prot=00 Driver=hub
+
+# Driver=rtw_8822bu was successfully replaced by Driver=88x2bu
+
+ethtool -i wlan1 | grep driver
+
+driver: 88x2bu
+```
+
+Now my Android device was able to connect to it flawlessly, but **strangely no internet connection could be accessed**. I suspected many things off the top of my head: maybe the driver was not working properly, or there was some configuration I forgot to change. Maybe NetworkManager was not cooperating well with the out-of-tree driver?
+
+## 5. Phase 3: Routing & NetworkManager nftables Dispatcher
+
+I started by toggling the connection using `nmcli` followed by rebooting the server altogether; nothing worked. I vaguely remembered setting custom `nftables` rules, and after some conversation with AI, I ran:
+
+```bash
+sudo nft list ruleset | grep -E "masquerade|forward"
+
+chain forward {
+        type filter hook forward priority -450; policy accept;
+        oifname "wlan1" masquerade
+chain ts-forward { # Warning: table ip filter is managed by iptables-nft, do not touch!
+        type filter hook forward priority filter; policy accept;
+        counter packets 28153 bytes 1985172 jump ts-forward # Warning: table ip nat is managed by iptables-nft, do not touch!
+        meta mark & 0x00ff0000 == 0x00040000 counter packets 0 bytes 0 masquerade
+        ip saddr 172.17.0.0/16 oifname != "docker0" counter packets 0 bytes 0 masquerade
+        ip saddr 172.18.0.0/16 oifname != "br-039bf6a27fc9" counter packets 2 bytes 120 masquerade
+        ip saddr 172.21.0.0/16 oifname != "br-90f276a0320d" counter packets 0 bytes 0 masquerade
+        ip saddr 172.20.0.0/16 oifname != "br-6c1e1d7be412" counter packets 1724 bytes 281139 masquerade
+        ip saddr 172.22.0.0/16 oifname != "br-69b2ed62fec9" counter packets 200 bytes 12000 masquerade
+        ip saddr 172.19.0.0/16 oifname != "br-3d5390d6930f" counter packets 0 bytes 0 masquerade # Warning: table ip6 filter is managed by iptables-nft, do not touch!
+chain ts-forward {
+        type filter hook forward priority filter; policy accept;
+        counter packets 0 bytes 0 jump ts-forward # Warning: table ip6 nat is managed by iptables-nft, do not touch! # Warning: XT target MASQUERADE not found # Warning: table ip mangle is managed by iptables-nft, do  not touch! # Warning: table ip6 mangle is managed by iptables-nft, do not touch!
+```
+
+I also checked if my Samsung phone was getting connected or not via:
+
+```bash
+sudo journalctl -u NetworkManager --no-pager -n 30 | grep dnsmasq-dhcp
+
+Jul 12 19:37:18 xotembotz-rpi dnsmasq-dhcp[1399]: DHCPREQUEST(wlan1) 192.168.197.157 e4:ec:e8:62:1a:bb                                                                                                                           
+Jul 12 19:37:18 xotembotz-rpi dnsmasq-dhcp[1399]: DHCPACK(wlan1) 192.168.197.157 e4:ec:e8:62:1a:bb Surjyadip-s-Phone                                                                                                             
+Jul 12 19:37:48 xotembotz-rpi dnsmasq-dhcp[1399]: DHCPREQUEST(wlan1) 192.168.197.85 1e:ac:3b:fc:9a:18                                                                                                                            
+Jul 12 19:37:48 xotembotz-rpi dnsmasq-dhcp[1399]: DHCPACK(wlan1) 192.168.197.85 1e:ac:3b:fc:9a:18 xotembotz-laptop                                                                                                               
+Jul 12 19:51:06 xotembotz-rpi dnsmasq-dhcp[1399]: DHCPACK(wlan1) 192.168.197.157 e4:ec:e8:62:1a:bb Surjyadip-s-Phone 
+```
+
+This proved that the phone was able to connect to it and obtain an IP. Although I was almost sure of what the problem was, I decided to run another query to verify my intuition:
+
+```bash
+sudo nft -a list table inet nm_hotspot
+
+table inet nm_hotspot { # handle 1                                  
+            chain input { # handle 1
+                    type filter hook input priority -450; policy accept;
+                    iifname "wlan0" accept # handle 2
+            }                              
+            chain forward { # handle 3
+                    type filter hook forward priority -450; policy accept;iifname "wlan0" accept # handle 4
+                    oifname "wlan0" accept # handle 5
+                    ct state established,related accept # handle 8
+        }                                       
+            chain postrouting { # handle 9
+                    type nat hook postrouting priority srcnat; policy accept;
+                    oifname "wlan1" masquerade # handle 12
+            }                                                                                                                                                                                                                        
+    }
+```
+
+Hence, it was evident that **NetworkManager's dispatcher was not updated to accommodate the change in interface**; it still thought that `wlan0` was WAN and `wlan1` was LAN. This needed to be fixed. To get the current state fixed, I ran the following commands and then verified if everything was properly set:
+
+```bash
+sudo nft add rule inet nm_hotspot postrouting oifname "wlan0" masquerade     
+sudo nft delete rule inet nm_hotspot postrouting handle 12         
+sudo nft add rule inet nm_hotspot forward iifname "wlan1" accept
+```
+
+The only remaining thing was to update my dispatch script to make the change permanent, hence:
+
+```bash
+sudo tee /etc/NetworkManager/dispatcher.d/99-hotspot-rules << 'EOF'
+    #!/bin/bash
+    INTERFACE=$1
+    ACTION=$2
+    if [ "$INTERFACE" = "wlan1" ] && [ "$ACTION" = "up" ]; then
+        sleep 2
+        nft add table inet nm_hotspot 2>/dev/null
+        nft add chain inet nm_hotspot forward { type filter hook forward priority -450 \; policy accept \; } 2>/dev/null
+        nft add chain inet nm_hotspot postrouting { type nat hook postrouting priority srcnat \; policy accept \; } 2>/dev/null
+        BROKEN_HANDLE=$(nft -a list table inet nm_hotspot 2>/dev/null | grep 'oifname "wlan1" masquerade' | awk '{print $NF}')
+        if [ ! -z "$BROKEN_HANDLE" ]; then
+            nft delete rule inet nm_hotspot postrouting handle $BROKEN_HANDLE
+        fi
+        nft add rule inet nm_hotspot postrouting oifname "wlan0" masquerade
+        nft add rule inet nm_hotspot forward iifname "wlan1" oifname "wlan1" accept
+        fi
+    EOF
+```
+
+After a final reboot, everything seemed to be working as expected (at least for now).
+
+## 6. Phase 4: Performance Bottlenecks & iperf3 Diagnosis
+
+After making this change, I evaluated the setup to identify any major problems. Although the setup looked perfect, I couldn't observe full speed on my Wi-Fi clients; **a speed drop of \~75% was observed**. First I thought software routing might be the bottleneck, or the TP-Link driver itself. Although the speed was not full, I went on using this setup for a few weeks, noting all the anomalies I could find. Almost two weeks later, I found this:
+
+- **Average speed was \~60% lower** than what was observed from the RPi
+- **Occasionally I was able to get higher speeds** at around ~80% of what I should be getting
+- **Ping from the clients was not consistent**; it frequently jumped from ~33–56ms to ~352–432ms
+- **Ping from the RPi was consistent** at 22–25ms
+
+I made sure that common causes of these issues were not the problem, i.e.:
+
+- CPU was not getting throttled
+- Interrupts were handled by all cores rather than a single core
+- Power saving was disabled using the driver config
+
+## 7. Resolution: Overcoming 5 GHz Channel Congestion
+
+The observed jitter in ping was really odd. The only things I could think of that might be causing it were not happening—neither CPU throttling nor enabled power saving. I started digging through everything that might give me a clue about this. I started with checking the wireless details and conducting a TCP test.
+
+Testing TCP:
+
+```bash
+xotem@xotembotz-laptop:~$ iperf3 -c 192.168.197.1  
+Connecting to host 192.168.197.1, port 5201
+[  5] local 192.168.197.85 port 55744 connected to 192.168.197.1 port 5201
+[ ID] Interval           Transfer     Bitrate         Retr  Cwnd
+[  5]   0.00-1.00   sec  5.12 MBytes  42.9 Mbits/sec    0    328 KBytes        
+[  5]   1.00-2.00   sec  4.62 MBytes  38.8 Mbits/sec    0    407 KBytes        
+[  5]   2.00-3.00   sec  6.38 MBytes  53.5 Mbits/sec    0    605 KBytes        
+[  5]   3.00-4.00   sec  7.00 MBytes  58.8 Mbits/sec    0    679 KBytes        
+[  5]   4.00-5.00   sec  0.00 Bytes  0.00 bits/sec    1    723 KBytes        
+[  5]   5.00-6.00   sec  1.50 MBytes  12.6 Mbits/sec    1    655 KBytes        
+[  5]   6.00-7.00   sec  1.38 MBytes  11.5 Mbits/sec    0    566 KBytes        
+[  5]   7.00-8.00   sec  1.38 MBytes  11.5 Mbits/sec    0    625 KBytes        
+[  5]   8.00-9.00   sec  0.00 Bytes  0.00 bits/sec    1    458 KBytes        
+[  5]   9.00-10.00  sec  1.62 MBytes  13.6 Mbits/sec    0    467 KBytes        
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-10.00  sec  29.0 MBytes  24.3 Mbits/sec    3            sender
+[  5]   0.00-10.01  sec  26.1 MBytes  21.9 Mbits/sec                  receiver
+iperf Done.
+xotem@xotembotz-laptop:~$   
+```
+
+Here you can see that **the transfer randomly stops at intervals 4–5s and 8–9s**; it seemed strange as the throughput recovered in subsequent intervals. This could be caused by a TCP congestion problem. To check that hypothesis, a proper UDP test was required:
+
+```bash
+xotem@xotembotz-rpi:~ $ iperf3 -s
+#iperf3 -c 192.168.197.1 -u -b 20M -t 10 was ran on the client
+-----------------------------------------------------------
+Server listening on 5201 (test #1)
+-----------------------------------------------------------
+Accepted connection from 192.168.197.85, port 47478
+[  5] local 192.168.197.1 port 5201 connected to 192.168.197.85 port 44858
+[ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+[  5]   0.00-1.00   sec  1.46 MBytes  12.2 Mbits/sec  14.571 ms  2/1058 (0.19%)   
+[  5]   1.00-2.00   sec  2.24 MBytes  18.8 Mbits/sec  4.541 ms  1/1624 (0.062%)   
+[  5]   2.00-3.00   sec  1.31 MBytes  11.0 Mbits/sec  10.932 ms  4/950 (0.42%)   
+[  5]   3.00-4.00   sec   424 KBytes  3.48 Mbits/sec  17.389 ms  16/316 (5.1%)   
+[  5]   4.00-5.00   sec   810 KBytes  6.64 Mbits/sec  5.725 ms  3/576 (0.52%)   
+[  5]   5.00-6.00   sec   706 KBytes  5.78 Mbits/sec  0.313 ms  6/505 (1.2%)   
+[  5]   6.00-7.00   sec  1.04 MBytes  8.71 Mbits/sec  9.775 ms  1/753 (0.13%)   
+[  5]   7.00-8.00   sec   956 KBytes  7.83 Mbits/sec  6.682 ms  6/682 (0.88%)   
+[  5]   8.00-9.00   sec   625 KBytes  5.12 Mbits/sec  7.598 ms  19/461 (4.1%)   
+[  5]   9.00-10.00  sec   621 KBytes  5.09 Mbits/sec  4.152 ms  15/454 (3.3%)   
+[  5]  10.00-10.20  sec  55.1 KBytes  2.28 Mbits/sec  2.597 ms  5/44 (11%)   
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+[SUM]  0.0-10.2 sec  2 datagrams received out-of-order
+[  5]   0.00-10.20  sec  10.1 MBytes  8.34 Mbits/sec  2.597 ms  78/7423 (1.1%)  receiver
+```
+
+Here no total drops were observed alongside a low packet drop rate of 1.1% only, giving much credence to a TCP congestion issue. Checking Wi-Fi Analyzer revealed that **all 2.4 GHz channels were intensely crowded** by wireless access points. 5 GHz was better, but only 3 channels had around 2 APs (observable from my room). On a hunch that channel congestion might be affecting transmission, I **switched to channel 157 in the 5 GHz band**, rebooted, and waited.
+
+## 8. Lessons Learned & Conclusion
+
+Finally, after weeks of monitoring, tweaking, and changing configuration, **I got full speed**, and **ping overhead dropped to a stable \~2–4ms**. I never thought that this simple change in configuration would transform into this massive investigation and would take weeks to be finally complete. Starting from swapping `wlan0` and `wlan1`, installing a custom driver, configuring nftables, and finally bowing down to almighty physics, I learned many things. Most importantly, I learned what persistent debugging is and what the environment can do to a Wi-Fi connection (even when devices are centimeters apart).
+
+---
+
+#### Homelab Series Navigation
+
+- [**Initial Setup (Part 1)**](/posts/my-slice-of-pi-homelab-setup)
+- [**Setup Upgrade (Part 2)**](/posts/baking-the-pi-lab-homelab-setup-pt2)
+- [**Networking Upgrade (Part 3)**](/posts/homelab-networking-topology-from-exposed-ports-to-tailscale-homelab-setup-pt3)
+- [**Subdomain HSTS & Wildcard SSL (Part 4)**](/posts/how-i-solved-subdomain-hsts-issues-in-my-homelab-using-traefik-and-acme-dns)
+- **Wi-Fi Router & Driver Debugging** *(This post)*
+
+---
+
+Signing off\
+Surjyadip Sen
